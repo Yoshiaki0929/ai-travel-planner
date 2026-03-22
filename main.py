@@ -1,0 +1,90 @@
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import StreamingResponse, FileResponse
+from pydantic import BaseModel
+import json
+import os
+import asyncio
+from agents import orchestrate_travel_plan
+
+app = FastAPI(title="AI Travel Planner")
+
+# Serve static files
+os.makedirs("static", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+class TravelRequest(BaseModel):
+    destination: str
+    duration_days: int
+    budget_jpy: int
+    num_people: int = 1
+    interests: str = "グルメ、観光"
+    travel_style: str = "バランス型"
+    additional_requests: str = ""
+
+
+@app.get("/")
+async def root():
+    return FileResponse("static/index.html")
+
+
+@app.post("/api/plan")
+async def create_plan(travel_request: TravelRequest):
+    """旅行プランを生成するエンドポイント（同期）"""
+
+    user_message = f"""
+以下の条件で旅行プランを作成してください：
+
+【旅行先】{travel_request.destination}
+【旅行期間】{travel_request.duration_days}日間
+【予算】{travel_request.budget_jpy:,}円（{travel_request.num_people}人）
+【人数】{travel_request.num_people}人
+【興味・関心】{travel_request.interests}
+【旅行スタイル】{travel_request.travel_style}
+【その他の希望】{travel_request.additional_requests if travel_request.additional_requests else 'なし'}
+
+旅行先調査、予算計算、日程作成、体験提案の全ツールを使って、完全な旅行プランを作成してください。
+"""
+
+    result = orchestrate_travel_plan(user_message)
+    return {"plan": result}
+
+
+@app.post("/api/plan/stream")
+async def create_plan_stream(travel_request: TravelRequest):
+    """旅行プランをSSEストリームで返すエンドポイント"""
+
+    user_message = f"""
+以下の条件で旅行プランを作成してください：
+
+【旅行先】{travel_request.destination}
+【旅行期間】{travel_request.duration_days}日間
+【予算】{travel_request.budget_jpy:,}円（{travel_request.num_people}人）
+【人数】{travel_request.num_people}人
+【興味・関心】{travel_request.interests}
+【旅行スタイル】{travel_request.travel_style}
+【その他の希望】{travel_request.additional_requests if travel_request.additional_requests else 'なし'}
+
+旅行先調査、予算計算、日程作成、体験提案の全ツールを使って、完全な旅行プランを作成してください。
+"""
+
+    async def generate():
+        yield f"data: {json.dumps({'type': 'start', 'message': '旅行プランを生成中...'}, ensure_ascii=False)}\n\n"
+        await asyncio.sleep(0)
+
+        yield f"data: {json.dumps({'type': 'progress', 'message': '🔍 旅行先の情報を調査中...'}, ensure_ascii=False)}\n\n"
+        await asyncio.sleep(0)
+
+        # Run synchronous in executor to not block event loop
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, orchestrate_travel_plan, user_message)
+
+        yield f"data: {json.dumps({'type': 'complete', 'plan': result}, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}

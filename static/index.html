@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Travel Planner</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      min-height: 100vh;
+    }
+
+    /* ===== Header ===== */
+    header {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0891b2 40%, #0d9488 100%);
+      color: white;
+      padding: 2.5rem 1.5rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+    header h1 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      position: relative;
+    }
+    header p {
+      margin-top: 0.5rem;
+      font-size: 1rem;
+      opacity: 0.9;
+      position: relative;
+    }
+    .header-icon { font-size: 2.5rem; display: block; margin-bottom: 0.4rem; }
+
+    /* ===== Main Layout ===== */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* ===== Presets ===== */
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 1.5rem;
+    }
+    .presets-label {
+      width: 100%;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.2rem;
+    }
+    .preset-btn {
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 2rem;
+      padding: 0.45rem 1rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #0891b2;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .preset-btn:hover {
+      background: #0891b2;
+      border-color: #0891b2;
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+    }
+
+    /* ===== Card ===== */
+    .card {
+      background: white;
+      border-radius: 1.25rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 1.4rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* ===== Form ===== */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-group.full { grid-column: 1 / -1; }
+    label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 0.6rem;
+      font-size: 0.95rem;
+      color: #1e293b;
+      background: #f8fafc;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #0891b2;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.12);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    /* ===== Budget Row (input + currency selector) ===== */
+    .budget-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: stretch;
+    }
+    .budget-row input {
+      flex: 1;
+    }
+    .currency-select {
+      width: auto;
+      min-width: 70px;
+      flex-shrink: 0;
+      padding: 0.65rem 0.5rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 0.6rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0891b2;
+      background: #f0f9ff;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .currency-select:focus {
+      border-color: #0891b2;
+      box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.12);
+    }
+
+    /* ===== Checkboxes (Interests) ===== */
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.1rem;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #f1f5f9;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 2rem;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: none;
+      letter-spacing: 0;
+      user-select: none;
+    }
+    .checkbox-label input { display: none; }
+    .checkbox-label:hover { border-color: #0891b2; color: #0891b2; background: #e0f2fe; }
+    .checkbox-label.checked {
+      background: #0891b2;
+      border-color: #0891b2;
+      color: white;
+    }
+
+    /* ===== Submit Button ===== */
+    .submit-btn {
+      width: 100%;
+      padding: 0.9rem 1.5rem;
+      background: linear-gradient(135deg, #0ea5e9, #0891b2);
+      color: white;
+      border: none;
+      border-radius: 0.75rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 1.5rem;
+      letter-spacing: 0.02em;
+      box-shadow: 0 4px 14px rgba(8, 145, 178, 0.35);
+    }
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(8, 145, 178, 0.45);
+    }
+    .submit-btn:disabled {
+      background: linear-gradient(135deg, #94a3b8, #64748b);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* ===== Loading State ===== */
+    #loading {
+      display: none;
+      text-align: center;
+      padding: 3rem 2rem;
+    }
+    #loading.active { display: block; }
+    .spinner {
+      width: 52px;
+      height: 52px;
+      border: 4px solid #e2e8f0;
+      border-top-color: #0891b2;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 1.2rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 0.5rem;
+    }
+    .progress-messages {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-top: 1rem;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .progress-msg {
+      font-size: 0.9rem;
+      color: #64748b;
+      padding: 0.4rem 0.8rem;
+      background: #f1f5f9;
+      border-radius: 0.4rem;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ===== Result ===== */
+    #result { display: none; }
+    #result.active { display: block; }
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .result-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .copy-btn {
+      background: #f1f5f9;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 0.5rem;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { background: #e2e8f0; border-color: #cbd5e1; }
+
+    /* ===== Markdown Styles ===== */
+    .markdown-body {
+      line-height: 1.75;
+      font-size: 0.96rem;
+      color: #334155;
+    }
+    .markdown-body h1 { font-size: 1.6rem; font-weight: 800; color: #0f172a; margin: 1.5rem 0 0.75rem; }
+    .markdown-body h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 1.8rem 0 0.6rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 2px solid #e0f2fe;
+    }
+    .markdown-body h3 { font-size: 1.05rem; font-weight: 700; color: #0369a1; margin: 1.2rem 0 0.4rem; }
+    .markdown-body h4 { font-size: 0.95rem; font-weight: 700; color: #475569; margin: 1rem 0 0.3rem; }
+    .markdown-body p { margin: 0.6rem 0; }
+    .markdown-body ul, .markdown-body ol { margin: 0.5rem 0 0.5rem 1.4rem; }
+    .markdown-body li { margin: 0.25rem 0; }
+    .markdown-body strong { color: #0f172a; font-weight: 700; }
+    .markdown-body code {
+      background: #f1f5f9;
+      border-radius: 0.3rem;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.88em;
+      color: #0369a1;
+    }
+    .markdown-body blockquote {
+      border-left: 3px solid #0891b2;
+      padding-left: 1rem;
+      color: #64748b;
+      margin: 0.8rem 0;
+    }
+    .markdown-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+    }
+    .markdown-body th {
+      background: #f1f5f9;
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      font-weight: 700;
+      border: 1px solid #e2e8f0;
+    }
+    .markdown-body td {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #e2e8f0;
+    }
+    .markdown-body tr:nth-child(even) td { background: #f8fafc; }
+    .markdown-body hr { border: none; border-top: 2px solid #f1f5f9; margin: 1.5rem 0; }
+
+    /* ===== Error ===== */
+    #error {
+      display: none;
+      background: #fff1f2;
+      border: 1.5px solid #fecdd3;
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      color: #be123c;
+      font-weight: 500;
+      margin-top: 1rem;
+    }
+    #error.active { display: block; }
+
+    /* ===== Footer ===== */
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      padding: 1.5rem;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .card { padding: 1.25rem; }
+      main { padding: 1.25rem 0.75rem 3rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="header-icon">✈️</span>
+  <h1>AI Travel Planner</h1>
+  <p>Gemini AI crafts your perfect trip</p>
+</header>
+
+<main>
+
+  <!-- Presets -->
+  <div class="presets">
+    <span class="presets-label">Quick Presets</span>
+    <button class="preset-btn" onclick="applyPreset('bali')">🌴 Bali 4 Days</button>
+    <button class="preset-btn" onclick="applyPreset('paris')">🗼 Paris 5 Days</button>
+    <button class="preset-btn" onclick="applyPreset('tokyo')">🗾 Tokyo 3 Days</button>
+  </div>
+
+  <!-- Form Card -->
+  <div class="card">
+    <div class="card-title">🗺️ Plan Your Trip</div>
+    <form id="planForm">
+      <div class="form-grid">
+
+        <div class="form-group full">
+          <label>Destination</label>
+          <input type="text" id="destination" name="destination" placeholder="e.g. Bali, Paris, Tokyo, New York" required />
+        </div>
+
+        <div class="form-group">
+          <label>Trip Duration (days)</label>
+          <input type="number" id="duration_days" name="duration_days" min="1" max="30" value="4" required />
+        </div>
+
+        <div class="form-group">
+          <label>Number of Travelers</label>
+          <input type="number" id="num_people" name="num_people" min="1" max="10" value="2" required />
+        </div>
+
+        <div class="form-group full">
+          <label>Total Budget</label>
+          <div class="budget-row">
+            <input type="number" id="budget_amount" name="budget_amount" min="1" step="100" value="2000" required />
+            <select id="budget_currency" class="currency-select" onchange="onCurrencyChange()">
+              <option value="USD">USD</option>
+              <option value="JPY">JPY</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label>Interests (select all that apply)</label>
+          <div class="checkbox-group" id="interestsGroup">
+            <label class="checkbox-label checked" onclick="toggleInterest(this, 'Food &amp; Dining')">
+              <input type="checkbox" value="Food &amp; Dining" checked /> 🍜 Food &amp; Dining
+            </label>
+            <label class="checkbox-label checked" onclick="toggleInterest(this, 'Sightseeing')">
+              <input type="checkbox" value="Sightseeing" checked /> 🏛️ Sightseeing
+            </label>
+            <label class="checkbox-label" onclick="toggleInterest(this, 'Arts &amp; Culture')">
+              <input type="checkbox" value="Arts &amp; Culture" /> 🎨 Arts &amp; Culture
+            </label>
+            <label class="checkbox-label" onclick="toggleInterest(this, 'Adventure')">
+              <input type="checkbox" value="Adventure" /> 🏄 Adventure
+            </label>
+            <label class="checkbox-label" onclick="toggleInterest(this, 'Relaxation')">
+              <input type="checkbox" value="Relaxation" /> 🧘 Relaxation
+            </label>
+            <label class="checkbox-label" onclick="toggleInterest(this, 'Shopping')">
+              <input type="checkbox" value="Shopping" /> 🛍️ Shopping
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label>Travel Style</label>
+          <select id="travel_style" name="travel_style">
+            <option value="Balanced">Balanced (mix of sightseeing, food, and relaxation)</option>
+            <option value="Sightseeing-focused">Sightseeing-focused (visit as many landmarks as possible)</option>
+            <option value="Food-focused">Food-focused (prioritize culinary experiences)</option>
+            <option value="Resort &amp; Relaxation">Resort &amp; Relaxation (slow-paced, restful travel)</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <label>Special Requests</label>
+          <textarea id="additional_requests" name="additional_requests" placeholder="e.g. Traveling with kids — include family-friendly activities / Vegetarian restaurants preferred / Honeymoon — add romantic touches..."></textarea>
+        </div>
+
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">
+        ✨ Create My Travel Plan
+      </button>
+    </form>
+  </div>
+
+  <!-- Error -->
+  <div id="error"></div>
+
+  <!-- Loading -->
+  <div class="card" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-title">Generating your travel plan...</div>
+    <p style="font-size:0.88rem;color:#94a3b8;margin-top:0.25rem;">Gemini AI is using multiple agents to craft your perfect itinerary</p>
+    <div class="progress-messages" id="progressMessages"></div>
+  </div>
+
+  <!-- Result -->
+  <div class="card" id="result">
+    <div class="result-header">
+      <div class="result-title">✅ Your Travel Plan is Ready!</div>
+      <button class="copy-btn" id="copyBtn" onclick="copyPlan()">📋 Copy</button>
+    </div>
+    <div class="markdown-body" id="planContent"></div>
+  </div>
+
+</main>
+
+<footer>
+  Powered by Gemini AI &nbsp;|&nbsp; AI Travel Planner
+</footer>
+
+<script>
+  // ===== Preset Configurations =====
+  const presets = {
+    bali: {
+      destination: 'Bali',
+      duration_days: 4,
+      budget_jpy: 300000,
+      num_people: 2,
+      interests: ['Food & Dining', 'Relaxation', 'Adventure'],
+      travel_style: 'Resort & Relaxation',
+      additional_requests: 'Please include a traditional Balinese spa experience'
+    },
+    paris: {
+      destination: 'Paris',
+      duration_days: 5,
+      budget_jpy: 600000,
+      num_people: 2,
+      interests: ['Food & Dining', 'Sightseeing', 'Arts & Culture', 'Shopping'],
+      travel_style: 'Balanced',
+      additional_requests: 'Must include the Louvre and Eiffel Tower'
+    },
+    tokyo: {
+      destination: 'Tokyo',
+      duration_days: 3,
+      budget_jpy: 150000,
+      num_people: 2,
+      interests: ['Sightseeing', 'Food & Dining'],
+      travel_style: 'Sightseeing-focused',
+      additional_requests: 'Include traditional Japanese experiences'
+    }
+  };
+
+  function applyPreset(key) {
+    const p = presets[key];
+    document.getElementById('destination').value = p.destination;
+    document.getElementById('duration_days').value = p.duration_days;
+    document.getElementById('num_people').value = p.num_people;
+    document.getElementById('travel_style').value = p.travel_style;
+    document.getElementById('additional_requests').value = p.additional_requests;
+
+    // Set budget in JPY mode
+    document.getElementById('budget_currency').value = 'JPY';
+    document.getElementById('budget_amount').value = p.budget_jpy;
+    updateBudgetStep();
+
+    // Reset all checkboxes
+    document.querySelectorAll('.checkbox-label').forEach(label => {
+      label.classList.remove('checked');
+      label.querySelector('input').checked = false;
+    });
+    // Set preset interests — match by decoded value
+    document.querySelectorAll('.checkbox-label input').forEach(input => {
+      const decoded = input.value.replace(/&amp;/g, '&');
+      if (p.interests.includes(decoded)) {
+        input.checked = true;
+        input.closest('.checkbox-label').classList.add('checked');
+      }
+    });
+  }
+
+  // ===== Currency change handler =====
+  function onCurrencyChange() {
+    updateBudgetStep();
+  }
+
+  function updateBudgetStep() {
+    const currency = document.getElementById('budget_currency').value;
+    const input = document.getElementById('budget_amount');
+    if (currency === 'JPY') {
+      input.step = 10000;
+      input.min = 10000;
+    } else {
+      input.step = 100;
+      input.min = 1;
+    }
+  }
+
+  function getBudgetInJPY() {
+    const amount = parseInt(document.getElementById('budget_amount').value) || 0;
+    const currency = document.getElementById('budget_currency').value;
+    return currency === 'USD' ? amount * 150 : amount;
+  }
+
+  // ===== Interest Toggle =====
+  function toggleInterest(label, value) {
+    label.classList.toggle('checked');
+    const checkbox = label.querySelector('input');
+    checkbox.checked = !checkbox.checked;
+  }
+
+  function getSelectedInterests() {
+    const checked = document.querySelectorAll('.checkbox-label input:checked');
+    const values = Array.from(checked).map(i => i.value.replace(/&amp;/g, '&'));
+    return values.length > 0 ? values.join(', ') : 'Food & Dining, Sightseeing';
+  }
+
+  // ===== Progress Messages =====
+  const progressSteps = [
+    '🔍 Researching destination...',
+    '💰 Calculating budget breakdown...',
+    '📅 Building your itinerary...',
+    '🎯 Finding best experiences...',
+    '✍️ Putting it all together...'
+  ];
+
+  let progressInterval = null;
+  let progressIndex = 0;
+
+  function startProgressMessages() {
+    const container = document.getElementById('progressMessages');
+    container.innerHTML = '';
+    progressIndex = 0;
+
+    progressInterval = setInterval(() => {
+      if (progressIndex < progressSteps.length) {
+        const msg = document.createElement('div');
+        msg.className = 'progress-msg';
+        msg.textContent = progressSteps[progressIndex];
+        container.appendChild(msg);
+        progressIndex++;
+        container.scrollTop = container.scrollHeight;
+      }
+    }, 2800);
+  }
+
+  function stopProgressMessages() {
+    if (progressInterval) {
+      clearInterval(progressInterval);
+      progressInterval = null;
+    }
+  }
+
+  // ===== Copy Plan =====
+  let rawPlanText = '';
+
+  function copyPlan() {
+    if (!rawPlanText) return;
+    navigator.clipboard.writeText(rawPlanText).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = '✅ Copied!';
+      setTimeout(() => { btn.textContent = '📋 Copy'; }, 2000);
+    }).catch(() => {
+      alert('Copy failed. Please select the text manually and copy.');
+    });
+  }
+
+  // ===== Form Submit =====
+  document.getElementById('planForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const submitBtn = document.getElementById('submitBtn');
+    const loadingEl = document.getElementById('loading');
+    const resultEl = document.getElementById('result');
+    const errorEl = document.getElementById('error');
+    const planContent = document.getElementById('planContent');
+
+    // Reset UI
+    resultEl.classList.remove('active');
+    errorEl.classList.remove('active');
+    errorEl.textContent = '';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Generating...';
+    loadingEl.classList.add('active');
+    startProgressMessages();
+
+    const payload = {
+      destination: document.getElementById('destination').value.trim(),
+      duration_days: parseInt(document.getElementById('duration_days').value),
+      budget_jpy: getBudgetInJPY(),
+      num_people: parseInt(document.getElementById('num_people').value),
+      interests: getSelectedInterests(),
+      travel_style: document.getElementById('travel_style').value.replace(/&amp;/g, '&'),
+      additional_requests: document.getElementById('additional_requests').value.trim()
+    };
+
+    try {
+      const response = await fetch('/api/plan/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // keep incomplete line
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data:')) continue;
+
+          const jsonStr = trimmed.slice(5).trim();
+          if (!jsonStr) continue;
+
+          let data;
+          try {
+            data = JSON.parse(jsonStr);
+          } catch {
+            continue;
+          }
+
+          if (data.type === 'start' || data.type === 'progress') {
+            // progress is handled by our own interval
+          } else if (data.type === 'complete') {
+            stopProgressMessages();
+            loadingEl.classList.remove('active');
+
+            rawPlanText = data.plan || '';
+            planContent.innerHTML = marked.parse(rawPlanText);
+            resultEl.classList.add('active');
+
+            // Smooth scroll to result
+            setTimeout(() => {
+              resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+          }
+        }
+      }
+
+    } catch (err) {
+      stopProgressMessages();
+      loadingEl.classList.remove('active');
+      errorEl.textContent = `Error: ${err.message}`;
+      errorEl.classList.add('active');
+      console.error(err);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '✨ Create My Travel Plan';
+    }
+  });
+</script>
+
+</body>
+</html>
