@@ -5,386 +5,185 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Travel Planner</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    /* ===== Reset & Base ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-    body {
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      background: #f0f4f8;
-      color: #2d3748;
-      min-height: 100vh;
-    }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f0f4f8; color: #2d3748; min-height: 100vh; }
 
-    /* ===== Header ===== */
+    /* Header */
     header {
       background: linear-gradient(135deg, #0ea5e9 0%, #0891b2 40%, #0d9488 100%);
-      color: white;
-      padding: 2.5rem 1.5rem 2rem;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
+      color: white; padding: 2.5rem 1.5rem 2rem; text-align: center; position: relative; overflow: hidden;
     }
     header::before {
-      content: '';
-      position: absolute;
-      inset: 0;
+      content: ''; position: absolute; inset: 0;
       background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
       pointer-events: none;
     }
-    header h1 {
-      font-size: clamp(1.6rem, 4vw, 2.4rem);
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      position: relative;
-    }
-    header p {
-      margin-top: 0.5rem;
-      font-size: 1rem;
-      opacity: 0.9;
-      position: relative;
-    }
+    header h1 { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; letter-spacing: -0.5px; position: relative; }
+    header p { margin-top: 0.5rem; font-size: 1rem; opacity: 0.9; position: relative; }
     .header-icon { font-size: 2.5rem; display: block; margin-bottom: 0.4rem; }
 
-    /* ===== Main Layout ===== */
-    main {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 2rem 1rem 4rem;
-    }
+    /* Layout */
+    main { max-width: 900px; margin: 0 auto; padding: 2rem 1rem 4rem; }
 
-    /* ===== Presets ===== */
-    .presets {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-      margin-bottom: 1.5rem;
-    }
-    .presets-label {
-      width: 100%;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.2rem;
-    }
+    /* Presets */
+    .presets { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.5rem; }
+    .presets-label { width: 100%; font-size: 0.8rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
     .preset-btn {
-      background: white;
-      border: 2px solid #e2e8f0;
-      border-radius: 2rem;
-      padding: 0.45rem 1rem;
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: #0891b2;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
+      background: white; border: 2px solid #e2e8f0; border-radius: 2rem;
+      padding: 0.45rem 1rem; font-size: 0.88rem; font-weight: 600; color: #0891b2;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
     }
-    .preset-btn:hover {
-      background: #0891b2;
-      border-color: #0891b2;
-      color: white;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
-    }
+    .preset-btn:hover { background: #0891b2; border-color: #0891b2; color: white; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(8,145,178,0.3); }
 
-    /* ===== Card ===== */
-    .card {
-      background: white;
-      border-radius: 1.25rem;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-      padding: 2rem;
-      margin-bottom: 1.5rem;
-    }
-    .card-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #0f172a;
-      margin-bottom: 1.4rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 2px solid #f1f5f9;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
+    /* Card */
+    .card { background: white; border-radius: 1.25rem; box-shadow: 0 4px 24px rgba(0,0,0,0.07); padding: 2rem; margin-bottom: 1.5rem; }
+    .card-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 1.4rem; padding-bottom: 0.75rem; border-bottom: 2px solid #f1f5f9; display: flex; align-items: center; gap: 0.5rem; }
 
-    /* ===== Form ===== */
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.2rem;
-    }
+    /* Form */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
     .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
     .form-group.full { grid-column: 1 / -1; }
-    label {
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: #475569;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+    label { font-size: 0.82rem; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; }
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%; padding: 0.65rem 0.9rem; border: 1.5px solid #e2e8f0; border-radius: 0.6rem;
+      font-size: 0.95rem; color: #1e293b; background: #f8fafc; transition: border-color 0.2s, box-shadow 0.2s; outline: none; font-family: inherit;
     }
-    input[type="text"],
-    input[type="number"],
-    select,
-    textarea {
-      width: 100%;
-      padding: 0.65rem 0.9rem;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 0.6rem;
-      font-size: 0.95rem;
-      color: #1e293b;
-      background: #f8fafc;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      outline: none;
-      font-family: inherit;
-    }
-    input:focus, select:focus, textarea:focus {
-      border-color: #0891b2;
-      background: white;
-      box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.12);
-    }
+    input:focus, select:focus, textarea:focus { border-color: #0891b2; background: white; box-shadow: 0 0 0 3px rgba(8,145,178,0.12); }
     textarea { resize: vertical; min-height: 80px; }
-
-    /* ===== Budget Row (input + currency selector) ===== */
-    .budget-row {
-      display: flex;
-      gap: 0.5rem;
-      align-items: stretch;
-    }
-    .budget-row input {
-      flex: 1;
-    }
-    .currency-select {
-      width: auto;
-      min-width: 70px;
-      flex-shrink: 0;
-      padding: 0.65rem 0.5rem;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 0.6rem;
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: #0891b2;
-      background: #f0f9ff;
-      cursor: pointer;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .currency-select:focus {
-      border-color: #0891b2;
-      box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.12);
-    }
-
-    /* ===== Checkboxes (Interests) ===== */
-    .checkbox-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 0.1rem;
-    }
+    .budget-row { display: flex; gap: 0.5rem; align-items: stretch; }
+    .budget-row input { flex: 1; }
+    .currency-select { width: auto; min-width: 70px; flex-shrink: 0; padding: 0.65rem 0.5rem; border: 1.5px solid #e2e8f0; border-radius: 0.6rem; font-size: 0.95rem; font-weight: 700; color: #0891b2; background: #f0f9ff; cursor: pointer; outline: none; transition: border-color 0.2s; }
+    .currency-select:focus { border-color: #0891b2; box-shadow: 0 0 0 3px rgba(8,145,178,0.12); }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.1rem; }
     .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-      background: #f1f5f9;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 2rem;
-      padding: 0.35rem 0.75rem;
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: #475569;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-transform: none;
-      letter-spacing: 0;
-      user-select: none;
+      display: flex; align-items: center; gap: 0.35rem; background: #f1f5f9; border: 1.5px solid #e2e8f0;
+      border-radius: 2rem; padding: 0.35rem 0.75rem; font-size: 0.85rem; font-weight: 500; color: #475569;
+      cursor: pointer; transition: all 0.2s; text-transform: none; letter-spacing: 0; user-select: none;
     }
     .checkbox-label input { display: none; }
     .checkbox-label:hover { border-color: #0891b2; color: #0891b2; background: #e0f2fe; }
-    .checkbox-label.checked {
-      background: #0891b2;
-      border-color: #0891b2;
-      color: white;
-    }
-
-    /* ===== Submit Button ===== */
+    .checkbox-label.checked { background: #0891b2; border-color: #0891b2; color: white; }
     .submit-btn {
-      width: 100%;
-      padding: 0.9rem 1.5rem;
-      background: linear-gradient(135deg, #0ea5e9, #0891b2);
-      color: white;
-      border: none;
-      border-radius: 0.75rem;
-      font-size: 1.05rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-top: 1.5rem;
-      letter-spacing: 0.02em;
-      box-shadow: 0 4px 14px rgba(8, 145, 178, 0.35);
+      width: 100%; padding: 0.9rem 1.5rem; background: linear-gradient(135deg, #0ea5e9, #0891b2);
+      color: white; border: none; border-radius: 0.75rem; font-size: 1.05rem; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; margin-top: 1.5rem; letter-spacing: 0.02em;
+      box-shadow: 0 4px 14px rgba(8,145,178,0.35);
     }
-    .submit-btn:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(8, 145, 178, 0.45);
-    }
-    .submit-btn:disabled {
-      background: linear-gradient(135deg, #94a3b8, #64748b);
-      cursor: not-allowed;
-      box-shadow: none;
-      transform: none;
-    }
+    .submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(8,145,178,0.45); }
+    .submit-btn:disabled { background: linear-gradient(135deg, #94a3b8, #64748b); cursor: not-allowed; box-shadow: none; transform: none; }
 
-    /* ===== Loading State ===== */
-    #loading {
-      display: none;
-      text-align: center;
-      padding: 3rem 2rem;
-    }
+    /* Loading */
+    #loading { display: none; text-align: center; padding: 3rem 2rem; }
     #loading.active { display: block; }
-    .spinner {
-      width: 52px;
-      height: 52px;
-      border: 4px solid #e2e8f0;
-      border-top-color: #0891b2;
-      border-radius: 50%;
-      animation: spin 0.9s linear infinite;
-      margin: 0 auto 1.2rem;
-    }
+    .spinner { width: 52px; height: 52px; border: 4px solid #e2e8f0; border-top-color: #0891b2; border-radius: 50%; animation: spin 0.9s linear infinite; margin: 0 auto 1.2rem; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #0f172a;
-      margin-bottom: 0.5rem;
-    }
-    .progress-messages {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-      margin-top: 1rem;
-      max-width: 420px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .progress-msg {
-      font-size: 0.9rem;
-      color: #64748b;
-      padding: 0.4rem 0.8rem;
-      background: #f1f5f9;
-      border-radius: 0.4rem;
-      animation: fadeIn 0.4s ease;
-    }
+    .loading-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
+    .progress-messages { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 1rem; max-width: 420px; margin-left: auto; margin-right: auto; }
+    .progress-msg { font-size: 0.9rem; color: #64748b; padding: 0.4rem 0.8rem; background: #f1f5f9; border-radius: 0.4rem; animation: fadeIn 0.4s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* ===== Result ===== */
-    #result { display: none; }
-    #result.active { display: block; }
-    .result-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-      gap: 0.5rem;
+    /* Error */
+    #error { display: none; background: #fff1f2; border: 1.5px solid #fecdd3; border-radius: 0.75rem; padding: 1rem 1.25rem; color: #be123c; font-weight: 500; margin-top: 1rem; }
+    #error.active { display: block; }
+
+    /* ===== VISUALS SECTION ===== */
+    #visuals { display: none; }
+    #visuals.active { display: block; }
+
+    /* Hero Photo */
+    .hero-banner {
+      position: relative; border-radius: 1.25rem; overflow: hidden;
+      height: 280px; margin-bottom: 1.5rem; background: linear-gradient(135deg, #0ea5e9, #0d9488);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
     }
-    .result-title {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: #0f172a;
+    .hero-banner img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.5s; }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%);
+      display: flex; align-items: flex-end; padding: 1.5rem 2rem;
     }
-    .copy-btn {
-      background: #f1f5f9;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 0.5rem;
-      padding: 0.4rem 0.9rem;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: #475569;
-      cursor: pointer;
-      transition: all 0.2s;
+    .hero-title { color: white; font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 800; text-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .tab-btn {
+      padding: 0.55rem 1.1rem; border: 2px solid #e2e8f0; border-radius: 2rem;
+      font-size: 0.88rem; font-weight: 600; color: #64748b; background: white;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
     }
+    .tab-btn:hover { border-color: #0891b2; color: #0891b2; }
+    .tab-btn.active { background: #0891b2; border-color: #0891b2; color: white; box-shadow: 0 3px 10px rgba(8,145,178,0.3); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Map */
+    #map { height: 420px; border-radius: 1rem; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+
+    /* Photo Gallery */
+    .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    @media (min-width: 600px) { .photo-grid { grid-template-columns: repeat(3, 1fr); } }
+    .photo-grid img {
+      width: 100%; height: 200px; object-fit: cover; border-radius: 0.75rem;
+      transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; background: #e2e8f0;
+    }
+    .photo-grid img:hover { transform: scale(1.03); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
+    .photo-caption { text-align: center; font-size: 0.8rem; color: #94a3b8; margin-top: 0.75rem; }
+
+    /* Videos */
+    .video-section { display: flex; flex-direction: column; gap: 1.5rem; }
+    .video-block h3 { font-size: 1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
+    .youtube-embed { width: 100%; aspect-ratio: 16/9; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); border: none; }
+    .tiktok-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .tiktok-btn {
+      display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem;
+      background: #000; color: white; border-radius: 0.75rem; text-decoration: none;
+      font-weight: 700; font-size: 0.9rem; transition: all 0.2s; box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    }
+    .tiktok-btn:hover { background: #1a1a2e; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.3); }
+    .tiktok-btn .tiktok-icon { font-size: 1.2rem; }
+    .youtube-link-btn {
+      display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem;
+      background: #ff0000; color: white; border-radius: 0.75rem; text-decoration: none;
+      font-weight: 700; font-size: 0.9rem; transition: all 0.2s; box-shadow: 0 3px 10px rgba(255,0,0,0.2);
+    }
+    .youtube-link-btn:hover { background: #cc0000; transform: translateY(-2px); }
+
+    /* Plan result */
+    .result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+    .result-title { font-size: 1.15rem; font-weight: 700; color: #0f172a; }
+    .copy-btn { background: #f1f5f9; border: 1.5px solid #e2e8f0; border-radius: 0.5rem; padding: 0.4rem 0.9rem; font-size: 0.82rem; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s; }
     .copy-btn:hover { background: #e2e8f0; border-color: #cbd5e1; }
 
-    /* ===== Markdown Styles ===== */
-    .markdown-body {
-      line-height: 1.75;
-      font-size: 0.96rem;
-      color: #334155;
-    }
+    /* Markdown */
+    .markdown-body { line-height: 1.75; font-size: 0.96rem; color: #334155; }
     .markdown-body h1 { font-size: 1.6rem; font-weight: 800; color: #0f172a; margin: 1.5rem 0 0.75rem; }
-    .markdown-body h2 {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: #0f172a;
-      margin: 1.8rem 0 0.6rem;
-      padding-bottom: 0.4rem;
-      border-bottom: 2px solid #e0f2fe;
-    }
+    .markdown-body h2 { font-size: 1.2rem; font-weight: 700; color: #0f172a; margin: 1.8rem 0 0.6rem; padding-bottom: 0.4rem; border-bottom: 2px solid #e0f2fe; }
     .markdown-body h3 { font-size: 1.05rem; font-weight: 700; color: #0369a1; margin: 1.2rem 0 0.4rem; }
     .markdown-body h4 { font-size: 0.95rem; font-weight: 700; color: #475569; margin: 1rem 0 0.3rem; }
     .markdown-body p { margin: 0.6rem 0; }
     .markdown-body ul, .markdown-body ol { margin: 0.5rem 0 0.5rem 1.4rem; }
     .markdown-body li { margin: 0.25rem 0; }
     .markdown-body strong { color: #0f172a; font-weight: 700; }
-    .markdown-body code {
-      background: #f1f5f9;
-      border-radius: 0.3rem;
-      padding: 0.1rem 0.35rem;
-      font-size: 0.88em;
-      color: #0369a1;
-    }
-    .markdown-body blockquote {
-      border-left: 3px solid #0891b2;
-      padding-left: 1rem;
-      color: #64748b;
-      margin: 0.8rem 0;
-    }
-    .markdown-body table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1rem 0;
-      font-size: 0.9rem;
-    }
-    .markdown-body th {
-      background: #f1f5f9;
-      padding: 0.5rem 0.75rem;
-      text-align: left;
-      font-weight: 700;
-      border: 1px solid #e2e8f0;
-    }
-    .markdown-body td {
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #e2e8f0;
-    }
+    .markdown-body code { background: #f1f5f9; border-radius: 0.3rem; padding: 0.1rem 0.35rem; font-size: 0.88em; color: #0369a1; }
+    .markdown-body blockquote { border-left: 3px solid #0891b2; padding-left: 1rem; color: #64748b; margin: 0.8rem 0; }
+    .markdown-body table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .markdown-body th { background: #f1f5f9; padding: 0.5rem 0.75rem; text-align: left; font-weight: 700; border: 1px solid #e2e8f0; }
+    .markdown-body td { padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; }
     .markdown-body tr:nth-child(even) td { background: #f8fafc; }
     .markdown-body hr { border: none; border-top: 2px solid #f1f5f9; margin: 1.5rem 0; }
 
-    /* ===== Error ===== */
-    #error {
-      display: none;
-      background: #fff1f2;
-      border: 1.5px solid #fecdd3;
-      border-radius: 0.75rem;
-      padding: 1rem 1.25rem;
-      color: #be123c;
-      font-weight: 500;
-      margin-top: 1rem;
-    }
-    #error.active { display: block; }
+    footer { text-align: center; font-size: 0.8rem; color: #94a3b8; padding: 1.5rem; }
 
-    /* ===== Footer ===== */
-    footer {
-      text-align: center;
-      font-size: 0.8rem;
-      color: #94a3b8;
-      padding: 1.5rem;
-    }
-
-    /* ===== Responsive ===== */
     @media (max-width: 600px) {
       .form-grid { grid-template-columns: 1fr; }
       .card { padding: 1.25rem; }
       main { padding: 1.25rem 0.75rem 3rem; }
+      .hero-banner { height: 200px; }
+      #map { height: 300px; }
     }
   </style>
 </head>
@@ -414,23 +213,23 @@
 
         <div class="form-group full">
           <label>Destination</label>
-          <input type="text" id="destination" name="destination" placeholder="e.g. Bali, Paris, Tokyo, New York" required />
+          <input type="text" id="destination" placeholder="e.g. Bali, Paris, Tokyo, New York" required />
         </div>
 
         <div class="form-group">
           <label>Trip Duration (days)</label>
-          <input type="number" id="duration_days" name="duration_days" min="1" max="30" value="4" required />
+          <input type="number" id="duration_days" min="1" max="30" value="4" required />
         </div>
 
         <div class="form-group">
           <label>Number of Travelers</label>
-          <input type="number" id="num_people" name="num_people" min="1" max="10" value="2" required />
+          <input type="number" id="num_people" min="1" max="10" value="2" required />
         </div>
 
         <div class="form-group full">
           <label>Total Budget</label>
           <div class="budget-row">
-            <input type="number" id="budget_amount" name="budget_amount" min="1" step="100" value="2000" required />
+            <input type="number" id="budget_amount" min="1" step="100" value="2000" required />
             <select id="budget_currency" class="currency-select" onchange="onCurrencyChange()">
               <option value="USD">USD</option>
               <option value="JPY">JPY</option>
@@ -439,32 +238,20 @@
         </div>
 
         <div class="form-group full">
-          <label>Interests (select all that apply)</label>
+          <label>Interests</label>
           <div class="checkbox-group" id="interestsGroup">
-            <label class="checkbox-label checked" onclick="toggleInterest(this, 'Food &amp; Dining')">
-              <input type="checkbox" value="Food &amp; Dining" checked /> 🍜 Food &amp; Dining
-            </label>
-            <label class="checkbox-label checked" onclick="toggleInterest(this, 'Sightseeing')">
-              <input type="checkbox" value="Sightseeing" checked /> 🏛️ Sightseeing
-            </label>
-            <label class="checkbox-label" onclick="toggleInterest(this, 'Arts &amp; Culture')">
-              <input type="checkbox" value="Arts &amp; Culture" /> 🎨 Arts &amp; Culture
-            </label>
-            <label class="checkbox-label" onclick="toggleInterest(this, 'Adventure')">
-              <input type="checkbox" value="Adventure" /> 🏄 Adventure
-            </label>
-            <label class="checkbox-label" onclick="toggleInterest(this, 'Relaxation')">
-              <input type="checkbox" value="Relaxation" /> 🧘 Relaxation
-            </label>
-            <label class="checkbox-label" onclick="toggleInterest(this, 'Shopping')">
-              <input type="checkbox" value="Shopping" /> 🛍️ Shopping
-            </label>
+            <label class="checkbox-label checked" onclick="toggleInterest(this)"><input type="checkbox" value="Food &amp; Dining" checked />🍜 Food &amp; Dining</label>
+            <label class="checkbox-label checked" onclick="toggleInterest(this)"><input type="checkbox" value="Sightseeing" checked />🏛️ Sightseeing</label>
+            <label class="checkbox-label" onclick="toggleInterest(this)"><input type="checkbox" value="Arts &amp; Culture" />🎨 Arts &amp; Culture</label>
+            <label class="checkbox-label" onclick="toggleInterest(this)"><input type="checkbox" value="Adventure" />🏄 Adventure</label>
+            <label class="checkbox-label" onclick="toggleInterest(this)"><input type="checkbox" value="Relaxation" />🧘 Relaxation</label>
+            <label class="checkbox-label" onclick="toggleInterest(this)"><input type="checkbox" value="Shopping" />🛍️ Shopping</label>
           </div>
         </div>
 
         <div class="form-group full">
           <label>Travel Style</label>
-          <select id="travel_style" name="travel_style">
+          <select id="travel_style">
             <option value="Balanced">Balanced (mix of sightseeing, food, and relaxation)</option>
             <option value="Sightseeing-focused">Sightseeing-focused (visit as many landmarks as possible)</option>
             <option value="Food-focused">Food-focused (prioritize culinary experiences)</option>
@@ -474,73 +261,101 @@
 
         <div class="form-group full">
           <label>Special Requests</label>
-          <textarea id="additional_requests" name="additional_requests" placeholder="e.g. Traveling with kids — include family-friendly activities / Vegetarian restaurants preferred / Honeymoon — add romantic touches..."></textarea>
+          <textarea id="additional_requests" placeholder="e.g. Traveling with kids / Vegetarian preferred / Honeymoon — add romantic touches..."></textarea>
         </div>
 
       </div>
-
-      <button type="submit" class="submit-btn" id="submitBtn">
-        ✨ Create My Travel Plan
-      </button>
+      <button type="submit" class="submit-btn" id="submitBtn">✨ Create My Travel Plan</button>
     </form>
   </div>
 
-  <!-- Error -->
   <div id="error"></div>
 
   <!-- Loading -->
   <div class="card" id="loading">
     <div class="spinner"></div>
     <div class="loading-title">Generating your travel plan...</div>
-    <p style="font-size:0.88rem;color:#94a3b8;margin-top:0.25rem;">Gemini AI is using multiple agents to craft your perfect itinerary</p>
+    <p style="font-size:0.88rem;color:#94a3b8;margin-top:0.25rem;">Gemini AI is crafting your perfect itinerary</p>
     <div class="progress-messages" id="progressMessages"></div>
   </div>
 
-  <!-- Result -->
-  <div class="card" id="result">
-    <div class="result-header">
-      <div class="result-title">✅ Your Travel Plan is Ready!</div>
-      <button class="copy-btn" id="copyBtn" onclick="copyPlan()">📋 Copy</button>
+  <!-- ===== VISUALS SECTION ===== -->
+  <div id="visuals">
+
+    <!-- Hero Photo Banner -->
+    <div class="hero-banner" id="heroBanner">
+      <img id="heroImg" src="" alt="Destination" onerror="this.style.display='none'" />
+      <div class="hero-overlay">
+        <div class="hero-title" id="heroTitle"></div>
+      </div>
     </div>
-    <div class="markdown-body" id="planContent"></div>
-  </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('plan', this)">📋 Travel Plan</button>
+      <button class="tab-btn" onclick="switchTab('map', this)">🗺️ Map</button>
+      <button class="tab-btn" onclick="switchTab('photos', this)">📸 Photos</button>
+      <button class="tab-btn" onclick="switchTab('videos', this)">🎬 Videos</button>
+    </div>
+
+    <!-- Tab: Plan -->
+    <div class="tab-panel active card" id="tab-plan">
+      <div class="result-header">
+        <div class="result-title">✅ Your Travel Plan is Ready!</div>
+        <button class="copy-btn" onclick="copyPlan()">📋 Copy</button>
+      </div>
+      <div class="markdown-body" id="planContent"></div>
+    </div>
+
+    <!-- Tab: Map -->
+    <div class="tab-panel card" id="tab-map">
+      <div class="card-title">🗺️ Destination Map</div>
+      <div id="map"></div>
+      <p style="font-size:0.8rem;color:#94a3b8;margin-top:0.75rem;text-align:center;">© OpenStreetMap contributors</p>
+    </div>
+
+    <!-- Tab: Photos -->
+    <div class="tab-panel card" id="tab-photos">
+      <div class="card-title">📸 Destination Photos</div>
+      <div class="photo-grid" id="photoGrid"></div>
+      <p class="photo-caption">Photos via Unsplash</p>
+    </div>
+
+    <!-- Tab: Videos -->
+    <div class="tab-panel card" id="tab-videos">
+      <div class="card-title">🎬 Travel Videos</div>
+      <div class="video-section">
+
+        <div class="video-block">
+          <h3>▶️ YouTube — Travel Guide</h3>
+          <iframe id="youtubeEmbed" class="youtube-embed" src="" allowfullscreen loading="lazy"></iframe>
+        </div>
+
+        <div class="video-block">
+          <h3>▶️ YouTube — Travel Vlog</h3>
+          <iframe id="youtubeEmbed2" class="youtube-embed" src="" allowfullscreen loading="lazy"></iframe>
+        </div>
+
+        <div class="video-block">
+          <h3>🎵 TikTok &amp; More</h3>
+          <div class="tiktok-row" id="socialLinks"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- end #visuals -->
 
 </main>
 
-<footer>
-  Powered by Gemini AI &nbsp;|&nbsp; AI Travel Planner
-</footer>
+<footer>Powered by Gemini AI &nbsp;|&nbsp; AI Travel Planner</footer>
 
 <script>
-  // ===== Preset Configurations =====
+  // ===== Presets =====
   const presets = {
-    bali: {
-      destination: 'Bali',
-      duration_days: 4,
-      budget_jpy: 300000,
-      num_people: 2,
-      interests: ['Food & Dining', 'Relaxation', 'Adventure'],
-      travel_style: 'Resort & Relaxation',
-      additional_requests: 'Please include a traditional Balinese spa experience'
-    },
-    paris: {
-      destination: 'Paris',
-      duration_days: 5,
-      budget_jpy: 600000,
-      num_people: 2,
-      interests: ['Food & Dining', 'Sightseeing', 'Arts & Culture', 'Shopping'],
-      travel_style: 'Balanced',
-      additional_requests: 'Must include the Louvre and Eiffel Tower'
-    },
-    tokyo: {
-      destination: 'Tokyo',
-      duration_days: 3,
-      budget_jpy: 150000,
-      num_people: 2,
-      interests: ['Sightseeing', 'Food & Dining'],
-      travel_style: 'Sightseeing-focused',
-      additional_requests: 'Include traditional Japanese experiences'
-    }
+    bali: { destination:'Bali', duration_days:4, budget_jpy:300000, num_people:2, interests:['Food & Dining','Relaxation','Adventure'], travel_style:'Resort & Relaxation', additional_requests:'Please include a traditional Balinese spa experience' },
+    paris: { destination:'Paris', duration_days:5, budget_jpy:600000, num_people:2, interests:['Food & Dining','Sightseeing','Arts & Culture','Shopping'], travel_style:'Balanced', additional_requests:'Must include the Louvre and Eiffel Tower' },
+    tokyo: { destination:'Tokyo', duration_days:3, budget_jpy:150000, num_people:2, interests:['Sightseeing','Food & Dining'], travel_style:'Sightseeing-focused', additional_requests:'Include traditional Japanese experiences' }
   };
 
   function applyPreset(key) {
@@ -550,139 +365,187 @@
     document.getElementById('num_people').value = p.num_people;
     document.getElementById('travel_style').value = p.travel_style;
     document.getElementById('additional_requests').value = p.additional_requests;
-
-    // Set budget in JPY mode
     document.getElementById('budget_currency').value = 'JPY';
     document.getElementById('budget_amount').value = p.budget_jpy;
     updateBudgetStep();
-
-    // Reset all checkboxes
-    document.querySelectorAll('.checkbox-label').forEach(label => {
-      label.classList.remove('checked');
-      label.querySelector('input').checked = false;
-    });
-    // Set preset interests — match by decoded value
+    document.querySelectorAll('.checkbox-label').forEach(l => { l.classList.remove('checked'); l.querySelector('input').checked = false; });
     document.querySelectorAll('.checkbox-label input').forEach(input => {
-      const decoded = input.value.replace(/&amp;/g, '&');
-      if (p.interests.includes(decoded)) {
-        input.checked = true;
-        input.closest('.checkbox-label').classList.add('checked');
-      }
+      const v = input.value.replace(/&amp;/g,'&');
+      if (p.interests.includes(v)) { input.checked = true; input.closest('.checkbox-label').classList.add('checked'); }
     });
   }
 
-  // ===== Currency change handler =====
-  function onCurrencyChange() {
-    updateBudgetStep();
+  function onCurrencyChange() { updateBudgetStep(); }
+  function updateBudgetStep() {
+    const c = document.getElementById('budget_currency').value;
+    const i = document.getElementById('budget_amount');
+    if (c === 'JPY') { i.step = 10000; i.min = 10000; } else { i.step = 100; i.min = 1; }
+  }
+  function getBudgetInJPY() {
+    const a = parseInt(document.getElementById('budget_amount').value) || 0;
+    return document.getElementById('budget_currency').value === 'USD' ? a * 150 : a;
+  }
+  function toggleInterest(label) {
+    label.classList.toggle('checked');
+    const cb = label.querySelector('input');
+    cb.checked = !cb.checked;
+  }
+  function getSelectedInterests() {
+    const checked = document.querySelectorAll('.checkbox-label input:checked');
+    const vals = Array.from(checked).map(i => i.value.replace(/&amp;/g,'&'));
+    return vals.length > 0 ? vals.join(', ') : 'Food & Dining, Sightseeing';
   }
 
-  function updateBudgetStep() {
-    const currency = document.getElementById('budget_currency').value;
-    const input = document.getElementById('budget_amount');
-    if (currency === 'JPY') {
-      input.step = 10000;
-      input.min = 10000;
-    } else {
-      input.step = 100;
-      input.min = 1;
+  // ===== Tabs =====
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+
+    // Init map when map tab is opened
+    if (name === 'map' && window._pendingMapDest) {
+      initMap(window._pendingMapDest);
+      window._pendingMapDest = null;
     }
   }
 
-  function getBudgetInJPY() {
-    const amount = parseInt(document.getElementById('budget_amount').value) || 0;
-    const currency = document.getElementById('budget_currency').value;
-    return currency === 'USD' ? amount * 150 : amount;
+  // ===== Map =====
+  let leafletMap = null;
+  async function initMap(destination) {
+    if (leafletMap) { leafletMap.remove(); leafletMap = null; }
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=1`);
+      const data = await res.json();
+      if (!data.length) return;
+      const { lat, lon, display_name } = data[0];
+      leafletMap = L.map('map').setView([parseFloat(lat), parseFloat(lon)], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19
+      }).addTo(leafletMap);
+      L.marker([parseFloat(lat), parseFloat(lon)])
+        .addTo(leafletMap)
+        .bindPopup(`<b>${destination}</b><br><small>${display_name}</small>`)
+        .openPopup();
+    } catch (e) { console.error('Map error:', e); }
   }
 
-  // ===== Interest Toggle =====
-  function toggleInterest(label, value) {
-    label.classList.toggle('checked');
-    const checkbox = label.querySelector('input');
-    checkbox.checked = !checkbox.checked;
+  // ===== Photos =====
+  function loadPhotos(destination) {
+    const grid = document.getElementById('photoGrid');
+    const themes = ['travel,city', 'food,restaurant', 'landmark,architecture', 'culture,people', 'nature,landscape', 'street,market'];
+    const enc = encodeURIComponent(destination);
+    grid.innerHTML = themes.map(theme =>
+      `<img src="https://source.unsplash.com/600x400/?${enc},${theme}" alt="${destination} - ${theme}" loading="lazy" onerror="this.style.display='none'" />`
+    ).join('');
   }
 
-  function getSelectedInterests() {
-    const checked = document.querySelectorAll('.checkbox-label input:checked');
-    const values = Array.from(checked).map(i => i.value.replace(/&amp;/g, '&'));
-    return values.length > 0 ? values.join(', ') : 'Food & Dining, Sightseeing';
+  // ===== YouTube =====
+  function loadVideos(destination) {
+    const enc = encodeURIComponent(destination + ' travel guide');
+    const enc2 = encodeURIComponent(destination + ' travel vlog');
+    document.getElementById('youtubeEmbed').src = `https://www.youtube.com/embed?listType=search&list=${enc}`;
+    document.getElementById('youtubeEmbed2').src = `https://www.youtube.com/embed?listType=search&list=${enc2}`;
+
+    const socialLinks = document.getElementById('socialLinks');
+    const encDest = encodeURIComponent(destination + ' travel');
+    socialLinks.innerHTML = `
+      <a class="tiktok-btn" href="https://www.tiktok.com/search?q=${encDest}" target="_blank" rel="noopener">
+        <span class="tiktok-icon">🎵</span> TikTok Videos
+      </a>
+      <a class="youtube-link-btn" href="https://www.youtube.com/results?search_query=${encDest}" target="_blank" rel="noopener">
+        ▶ More on YouTube
+      </a>
+      <a class="tiktok-btn" style="background:#E1306C;" href="https://www.instagram.com/explore/tags/${encodeURIComponent(destination.replace(/\s/g,''))}travel/" target="_blank" rel="noopener">
+        📸 Instagram
+      </a>
+    `;
+  }
+
+  // ===== Show All Visuals =====
+  function showVisuals(destination) {
+    document.getElementById('visuals').classList.add('active');
+
+    // Hero
+    document.getElementById('heroTitle').textContent = '✈️ ' + destination;
+    const enc = encodeURIComponent(destination);
+    document.getElementById('heroImg').src = `https://source.unsplash.com/1600x500/?${enc},travel,city`;
+
+    // Photos
+    loadPhotos(destination);
+
+    // Videos
+    loadVideos(destination);
+
+    // Map: init immediately or defer to tab click
+    window._pendingMapDest = destination;
+    // Pre-init on first load (if map tab is active)
+    const mapTab = document.getElementById('tab-map');
+    if (mapTab.classList.contains('active')) {
+      initMap(destination);
+      window._pendingMapDest = null;
+    }
   }
 
   // ===== Progress Messages =====
-  const progressSteps = [
-    '🔍 Researching destination...',
-    '💰 Calculating budget breakdown...',
-    '📅 Building your itinerary...',
-    '🎯 Finding best experiences...',
-    '✍️ Putting it all together...'
-  ];
-
-  let progressInterval = null;
-  let progressIndex = 0;
-
-  function startProgressMessages() {
-    const container = document.getElementById('progressMessages');
-    container.innerHTML = '';
-    progressIndex = 0;
-
+  const progressSteps = ['🔍 Researching destination...','💰 Calculating budget...','📅 Building itinerary...','🎯 Finding experiences...','✍️ Writing your plan...'];
+  let progressInterval = null, progressIndex = 0;
+  function startProgress() {
+    const c = document.getElementById('progressMessages');
+    c.innerHTML = ''; progressIndex = 0;
     progressInterval = setInterval(() => {
       if (progressIndex < progressSteps.length) {
-        const msg = document.createElement('div');
-        msg.className = 'progress-msg';
-        msg.textContent = progressSteps[progressIndex];
-        container.appendChild(msg);
-        progressIndex++;
-        container.scrollTop = container.scrollHeight;
+        const m = document.createElement('div');
+        m.className = 'progress-msg'; m.textContent = progressSteps[progressIndex++];
+        c.appendChild(m); c.scrollTop = c.scrollHeight;
       }
     }, 2800);
   }
+  function stopProgress() { if (progressInterval) { clearInterval(progressInterval); progressInterval = null; } }
 
-  function stopProgressMessages() {
-    if (progressInterval) {
-      clearInterval(progressInterval);
-      progressInterval = null;
-    }
-  }
-
-  // ===== Copy Plan =====
+  // ===== Copy =====
   let rawPlanText = '';
-
   function copyPlan() {
     if (!rawPlanText) return;
     navigator.clipboard.writeText(rawPlanText).then(() => {
-      const btn = document.getElementById('copyBtn');
+      const btn = document.querySelector('.copy-btn');
       btn.textContent = '✅ Copied!';
       setTimeout(() => { btn.textContent = '📋 Copy'; }, 2000);
-    }).catch(() => {
-      alert('Copy failed. Please select the text manually and copy.');
     });
   }
 
   // ===== Form Submit =====
   document.getElementById('planForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-
     const submitBtn = document.getElementById('submitBtn');
     const loadingEl = document.getElementById('loading');
-    const resultEl = document.getElementById('result');
     const errorEl = document.getElementById('error');
-    const planContent = document.getElementById('planContent');
+    const visuals = document.getElementById('visuals');
 
-    // Reset UI
-    resultEl.classList.remove('active');
+    // Reset
+    visuals.classList.remove('active');
     errorEl.classList.remove('active');
     errorEl.textContent = '';
     submitBtn.disabled = true;
     submitBtn.textContent = 'Generating...';
     loadingEl.classList.add('active');
-    startProgressMessages();
+    startProgress();
 
+    // Reset tabs to Plan
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-plan').classList.add('active');
+    document.querySelector('.tab-btn').classList.add('active');
+
+    const destination = document.getElementById('destination').value.trim();
     const payload = {
-      destination: document.getElementById('destination').value.trim(),
+      destination,
       duration_days: parseInt(document.getElementById('duration_days').value),
       budget_jpy: getBudgetInJPY(),
       num_people: parseInt(document.getElementById('num_people').value),
       interests: getSelectedInterests(),
-      travel_style: document.getElementById('travel_style').value.replace(/&amp;/g, '&'),
+      travel_style: document.getElementById('travel_style').value.replace(/&amp;/g,'&'),
       additional_requests: document.getElementById('additional_requests').value.trim()
     };
 
@@ -692,10 +555,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status} ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
@@ -704,49 +564,31 @@
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
-        buffer = lines.pop(); // keep incomplete line
-
+        buffer = lines.pop();
         for (const line of lines) {
           const trimmed = line.trim();
           if (!trimmed.startsWith('data:')) continue;
-
           const jsonStr = trimmed.slice(5).trim();
           if (!jsonStr) continue;
-
           let data;
-          try {
-            data = JSON.parse(jsonStr);
-          } catch {
-            continue;
-          }
-
-          if (data.type === 'start' || data.type === 'progress') {
-            // progress is handled by our own interval
-          } else if (data.type === 'complete') {
-            stopProgressMessages();
+          try { data = JSON.parse(jsonStr); } catch { continue; }
+          if (data.type === 'complete') {
+            stopProgress();
             loadingEl.classList.remove('active');
-
             rawPlanText = data.plan || '';
-            planContent.innerHTML = marked.parse(rawPlanText);
-            resultEl.classList.add('active');
-
-            // Smooth scroll to result
-            setTimeout(() => {
-              resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
+            document.getElementById('planContent').innerHTML = marked.parse(rawPlanText);
+            showVisuals(destination);
+            setTimeout(() => { document.getElementById('visuals').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
           }
         }
       }
-
     } catch (err) {
-      stopProgressMessages();
+      stopProgress();
       loadingEl.classList.remove('active');
       errorEl.textContent = `Error: ${err.message}`;
       errorEl.classList.add('active');
-      console.error(err);
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = '✨ Create My Travel Plan';
