@@ -97,9 +97,16 @@ async def health():
 
 @app.get("/debug")
 async def debug():
+    from openai import OpenAI
     key = os.environ.get("GEMINI_API_KEY", "")
+    models = []
+    try:
+        c = OpenAI(api_key=key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+        models = [m.id for m in c.models.list()]
+    except Exception as e:
+        models = [f"error: {str(e)}"]
     return {
         "gemini_key_set": bool(key),
         "gemini_key_prefix": key[:8] + "..." if len(key) > 8 else "(empty)",
-        "model": "gemini-2.0-flash",
+        "available_models": models,
     }
