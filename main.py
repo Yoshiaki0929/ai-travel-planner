@@ -93,3 +93,13 @@ async def create_plan_stream(travel_request: TravelRequest):
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/debug")
+async def debug():
+    key = os.environ.get("GEMINI_API_KEY", "")
+    return {
+        "gemini_key_set": bool(key),
+        "gemini_key_prefix": key[:8] + "..." if len(key) > 8 else "(empty)",
+        "model": "gemini-2.0-flash",
+    }
