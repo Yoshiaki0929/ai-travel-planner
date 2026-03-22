@@ -7,6 +7,8 @@ import os
 import asyncio
 import traceback
 from agents import orchestrate_travel_plan
+import httpx
+from auth import get_current_user
 
 app = FastAPI(title="AI Travel Planner")
 
@@ -110,6 +112,101 @@ async def create_plan_stream(travel_request: TravelRequest):
         yield f"data: {json.dumps({'type': 'complete', 'plan': result}, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
+
+
+@app.get("/api/config")
+async def get_config():
+    """Return public Supabase keys for the frontend."""
+    return {
+        "supabase_url": os.environ.get("SUPABASE_URL", ""),
+        "supabase_anon_key": os.environ.get("SUPABASE_ANON_KEY", ""),
+    }
+
+
+@app.get("/api/me")
+async def get_me(authorization: str = Header(None)):
+    """Return current user info."""
+    user = await get_current_user(authorization)
+    if not user:
+        return JSONResponse(status_code=401, content={"error": "Not authenticated"})
+    return user
+
+
+@app.post("/api/plans/save")
+async def save_plan(request: Request, authorization: str = Header(None)):
+    """Save a travel plan to Supabase for the logged-in user."""
+    user = await get_current_user(authorization)
+    if not user:
+        return JSONResponse(status_code=401, content={"error": "Login required to save plans"})
+
+    body = await request.json()
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    if not supabase_url or not supabase_key:
+        return JSONResponse(status_code=500, content={"error": "Database not configured"})
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{supabase_url}/rest/v1/saved_plans",
+            headers={
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}",
+                "Content-Type": "application/json",
+                "Prefer": "return=representation",
+            },
+            json={
+                "user_id": user["id"],
+                "destination": body.get("destination", ""),
+                "duration_days": body.get("duration_days", 1),
+                "budget_jpy": body.get("budget_jpy", 0),
+                "plan_content": body.get("plan_content", ""),
+            },
+        )
+    if resp.status_code not in (200, 201):
+        return JSONResponse(status_code=500, content={"error": "Failed to save plan"})
+    return {"ok": True, "plan": resp.json()[0] if resp.json() else {}}
+
+
+@app.get("/api/plans")
+async def get_plans(authorization: str = Header(None)):
+    """Get all saved plans for the logged-in user."""
+    user = await get_current_user(authorization)
+    if not user:
+        return JSONResponse(status_code=401, content={"error": "Not authenticated"})
+
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{supabase_url}/rest/v1/saved_plans?user_id=eq.{user['id']}&order=created_at.desc",
+            headers={
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}",
+            },
+        )
+    return resp.json() if resp.status_code == 200 else []
+
+
+@app.delete("/api/plans/{plan_id}")
+async def delete_plan(plan_id: str, authorization: str = Header(None)):
+    """Delete a saved plan (only if it belongs to the current user)."""
+    user = await get_current_user(authorization)
+    if not user:
+        return JSONResponse(status_code=401, content={"error": "Not authenticated"})
+
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.delete(
+            f"{supabase_url}/rest/v1/saved_plans?id=eq.{plan_id}&user_id=eq.{user['id']}",
+            headers={
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}",
+            },
+        )
+    return {"ok": resp.status_code == 204}
 
 
 @app.get("/health")

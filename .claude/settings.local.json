@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(pip3 install:*)",
+      "Bash(python3 qa_team.py)",
+      "Bash(python3 -:*)",
+      "Bash(/Applications/Ollama.app/Contents/Resources/ollama pull:*)",
+      "Bash(/Applications/Ollama.app/Contents/Resources/ollama list:*)",
+      "Bash(printf \"fastapi==0.115.0\\\\nuvicorn[standard]==0.32.0\\\\nopenai>=1.0.0\\\\npython-multipart==0.0.12\\\\n\")",
+      "Bash(\"/Users/yoshiakiimai/Desktop/Travel App/requirements.txt\")",
+      "Bash(python3 -c \":*)",
+      "WebFetch(domain:ai-travel-planner-swet.onrender.com)",
+      "Bash(curl -s -i -X POST https://ai-travel-planner-swet.onrender.com/api/plan -H \"Content-Type: application/json\" -d '{\"\"destination\"\": \"\"Tokyo\"\", \"\"duration_days\"\": 3, \"\"budget_jpy\"\": 150000, \"\"num_people\"\": 2, \"\"interests\"\": \"\"food, culture\"\", \"\"travel_style\"\": \"\"balanced\"\", \"\"additional_requests\"\": \"\"\"\"}')",
+      "Bash(curl:*)",
+      "Read(//private/tmp/**)",
+      "Bash(python3 -c \"import sys,json; lines=[l for l in sys.stdin if l.strip\\(\\)]; d=json.loads\\(lines[-1]\\) if lines else {}; print\\(d.get\\(''''type'''',''''?''''\\), d.get\\(''''message'''',{}\\).get\\(''''role'''',''''''''\\), str\\(d.get\\(''''message'''',{}\\).get\\(''''content'''',''''''''\\)\\)[:200]\\)\")"
+    ]
+  }
+}

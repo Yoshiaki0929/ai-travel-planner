@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
@@ -197,6 +198,48 @@
       .hero-banner { height: 200px; }
       #map { height: 300px; }
     }
+
+    /* ===== AUTH ===== */
+    .auth-btn { background: white; border: 1.5px solid rgba(255,255,255,0.4); border-radius: 2rem; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: 600; color: #0891b2; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .auth-btn:hover { background: rgba(255,255,255,0.15); color: white; border-color: white; }
+    .user-menu { position: relative; display: inline-block; }
+    .user-avatar { width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.6); cursor: pointer; object-fit: cover; background: #e2e8f0; }
+    .user-avatar-placeholder { width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.6); cursor: pointer; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: white; font-weight: 700; }
+    .user-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 8px); background: white; border-radius: 0.75rem; box-shadow: 0 8px 30px rgba(0,0,0,0.15); min-width: 180px; overflow: hidden; z-index: 1000; }
+    .user-dropdown.open { display: block; }
+    .user-dropdown-name { padding: 0.75rem 1rem 0.5rem; font-weight: 700; color: #0f172a; font-size: 0.9rem; border-bottom: 1px solid #f1f5f9; }
+    .user-dropdown-email { padding: 0 1rem 0.5rem; font-size: 0.75rem; color: #94a3b8; border-bottom: 1px solid #f1f5f9; }
+    .user-dropdown a { display: block; padding: 0.65rem 1rem; font-size: 0.88rem; color: #475569; text-decoration: none; font-weight: 500; transition: background 0.15s; }
+    .user-dropdown a:hover { background: #f8fafc; color: #0891b2; }
+    .user-dropdown a.danger { color: #be123c; }
+    .user-dropdown a.danger:hover { background: #fff1f2; }
+
+    /* Login modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 1.25rem; padding: 2rem; width: 90%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
+    .modal-title { font-size: 1.3rem; font-weight: 800; color: #0f172a; margin-bottom: 0.4rem; text-align: center; }
+    .modal-sub { font-size: 0.88rem; color: #64748b; text-align: center; margin-bottom: 1.5rem; }
+    .social-btn { display: flex; align-items: center; justify-content: center; gap: 0.75rem; width: 100%; padding: 0.75rem 1.25rem; border-radius: 0.75rem; border: 1.5px solid #e2e8f0; background: white; font-size: 0.95rem; font-weight: 600; color: #1e293b; cursor: pointer; transition: all 0.2s; margin-bottom: 0.75rem; }
+    .social-btn:hover { background: #f8fafc; border-color: #cbd5e1; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .social-btn img { width: 22px; height: 22px; }
+    .modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #94a3b8; line-height: 1; }
+    .modal-close:hover { color: #475569; }
+
+    /* Save button */
+    .save-plan-btn { background: #0891b2; color: white; border: none; border-radius: 0.5rem; padding: 0.4rem 0.9rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .save-plan-btn:hover { background: #0e7490; }
+    .save-plan-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+    /* Saved plans modal */
+    .plans-list { display: flex; flex-direction: column; gap: 0.75rem; max-height: 60vh; overflow-y: auto; }
+    .plan-card { border: 1.5px solid #e2e8f0; border-radius: 0.75rem; padding: 1rem; position: relative; }
+    .plan-card-title { font-weight: 700; color: #0f172a; font-size: 1rem; }
+    .plan-card-meta { font-size: 0.8rem; color: #94a3b8; margin-top: 0.2rem; }
+    .plan-card-del { position: absolute; top: 0.75rem; right: 0.75rem; background: none; border: none; color: #fca5a5; cursor: pointer; font-size: 1rem; }
+    .plan-card-del:hover { color: #dc2626; }
+    .plan-card-view { display: inline-block; margin-top: 0.6rem; font-size: 0.82rem; color: #0891b2; font-weight: 600; cursor: pointer; }
+    .plan-card-view:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -205,6 +248,9 @@
   <span class="header-icon">✈️</span>
   <h1>AI Travel Planner</h1>
   <p>Gemini AI crafts your perfect trip</p>
+    <div style="position:absolute;top:1rem;right:1rem;display:flex;align-items:center;gap:0.5rem;" id="authControls">
+      <button class="auth-btn" onclick="openLoginModal()" id="loginBtn">Sign In</button>
+    </div>
 </header>
 
 <main>
@@ -315,6 +361,7 @@
       <div class="result-header">
         <div class="result-title">✅ Your Travel Plan is Ready!</div>
         <button class="copy-btn" onclick="copyPlan()">📋 Copy</button>
+        <button class="save-plan-btn" id="savePlanBtn" onclick="savePlan()" style="display:none">💾 Save Plan</button>
       </div>
       <div class="markdown-body" id="planContent"></div>
     </div>
@@ -352,6 +399,32 @@
     </div>
 
   </div><!-- end #visuals -->
+
+<!-- Login Modal -->
+<div class="modal-overlay" id="loginModal" onclick="if(event.target===this)closeLoginModal()">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeLoginModal()">×</button>
+    <div class="modal-title">✈️ Sign In</div>
+    <div class="modal-sub">Save your travel plans and access them anytime</div>
+    <button class="social-btn" onclick="signInWithGoogle()">
+      <img src="https://www.google.com/favicon.ico" alt="Google"> Continue with Google
+    </button>
+    <button class="social-btn" onclick="signInWithGitHub()" style="background:#24292e;color:white;border-color:#24292e">
+      <span style="font-size:1.2rem">🐙</span> Continue with GitHub
+    </button>
+    <p style="font-size:0.75rem;color:#94a3b8;text-align:center;margin-top:1rem">By signing in, you agree to save your travel plans securely.</p>
+  </div>
+</div>
+
+<!-- Saved Plans Modal -->
+<div class="modal-overlay" id="plansModal" onclick="if(event.target===this)closePlansModal()">
+  <div class="modal" style="position:relative;max-width:520px;width:95%">
+    <button class="modal-close" onclick="closePlansModal()">×</button>
+    <div class="modal-title">📚 My Saved Plans</div>
+    <div class="modal-sub" id="plansModalSub">Your saved travel plans</div>
+    <div class="plans-list" id="plansList"></div>
+  </div>
+</div>
 
 </main>
 
@@ -649,6 +722,12 @@
             rawPlanText = data.plan || '';
             document.getElementById('planContent').innerHTML = marked.parse(rawPlanText);
             showVisuals(destination);
+            // Store for saving + show save button if logged in
+            currentPlanData = { destination, duration_days: payload.duration_days, budget_jpy: payload.budget_jpy, plan_content: rawPlanText };
+            const saveBtn = document.getElementById('savePlanBtn');
+            saveBtn.style.display = currentUser ? 'inline-block' : 'none';
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 Save Plan';
             setTimeout(() => { document.getElementById('visuals').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
           }
         }
@@ -663,6 +742,149 @@
       submitBtn.textContent = '✨ Create My Travel Plan';
     }
   });
+
+  // ===== AUTH (Supabase) =====
+  let supabase = null;
+  let currentUser = null;
+  let currentPlanData = null; // stores latest plan for saving
+
+  async function initSupabase() {
+    try {
+      const cfg = await fetch('/api/config').then(r => r.json());
+      if (!cfg.supabase_url || !cfg.supabase_anon_key) return;
+      supabase = window.supabase.createClient(cfg.supabase_url, cfg.supabase_anon_key);
+
+      // Listen to auth state changes
+      supabase.auth.onAuthStateChange(async (event, session) => {
+        if (session?.user) {
+          currentUser = session.user;
+          renderUserMenu(session.user);
+        } else {
+          currentUser = null;
+          renderLoginBtn();
+        }
+      });
+
+      // Check existing session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        currentUser = session.user;
+        renderUserMenu(session.user);
+      }
+    } catch (e) { console.warn('Auth init failed', e); }
+  }
+
+  function renderLoginBtn() {
+    document.getElementById('authControls').innerHTML =
+      `<button class="auth-btn" onclick="openLoginModal()" id="loginBtn">Sign In</button>`;
+  }
+
+  function renderUserMenu(user) {
+    const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+    const avatar = user.user_metadata?.avatar_url;
+    const initials = name.charAt(0).toUpperCase();
+    const avatarHtml = avatar
+      ? `<img class="user-avatar" src="${avatar}" alt="${name}" onclick="toggleDropdown()">`
+      : `<div class="user-avatar-placeholder" onclick="toggleDropdown()">${initials}</div>`;
+    document.getElementById('authControls').innerHTML = `
+      <div class="user-menu" id="userMenu">
+        ${avatarHtml}
+        <div class="user-dropdown" id="userDropdown">
+          <div class="user-dropdown-name">${name}</div>
+          <div class="user-dropdown-email">${user.email || ''}</div>
+          <a onclick="openPlansModal()">📚 My Saved Plans</a>
+          <a onclick="signOut()" class="danger">Sign Out</a>
+        </div>
+      </div>`;
+    document.addEventListener('click', closeDropdownOnOutsideClick, { once: false });
+  }
+
+  function toggleDropdown() {
+    document.getElementById('userDropdown')?.classList.toggle('open');
+  }
+  function closeDropdownOnOutsideClick(e) {
+    const menu = document.getElementById('userMenu');
+    if (menu && !menu.contains(e.target)) {
+      document.getElementById('userDropdown')?.classList.remove('open');
+    }
+  }
+
+  function openLoginModal() { document.getElementById('loginModal').classList.add('open'); }
+  function closeLoginModal() { document.getElementById('loginModal').classList.remove('open'); }
+  function openPlansModal() {
+    document.getElementById('userDropdown')?.classList.remove('open');
+    document.getElementById('plansModal').classList.add('open');
+    loadSavedPlans();
+  }
+  function closePlansModal() { document.getElementById('plansModal').classList.remove('open'); }
+
+  async function signInWithGoogle() {
+    if (!supabase) return alert('Auth not configured yet.');
+    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+  }
+  async function signInWithGitHub() {
+    if (!supabase) return alert('Auth not configured yet.');
+    await supabase.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: window.location.origin } });
+  }
+  async function signOut() {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    renderLoginBtn();
+  }
+
+  async function savePlan() {
+    if (!currentUser || !supabase) { openLoginModal(); return; }
+    if (!currentPlanData) return;
+    const btn = document.getElementById('savePlanBtn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+    const { data: { session } } = await supabase.auth.getSession();
+    try {
+      const resp = await fetch('/api/plans/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify(currentPlanData),
+      });
+      if (resp.ok) { btn.textContent = '✅ Saved!'; setTimeout(() => { btn.disabled = false; btn.textContent = '💾 Save Plan'; }, 2500); }
+      else { btn.textContent = '❌ Error'; btn.disabled = false; }
+    } catch { btn.textContent = '❌ Error'; btn.disabled = false; }
+  }
+
+  async function loadSavedPlans() {
+    if (!supabase) return;
+    const listEl = document.getElementById('plansList');
+    listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:1rem">Loading...</div>';
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { listEl.innerHTML = '<div style="text-align:center;color:#94a3b8">Not logged in</div>'; return; }
+    try {
+      const plans = await fetch('/api/plans', { headers: { 'Authorization': `Bearer ${session.access_token}` } }).then(r => r.json());
+      if (!plans.length) { listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:1rem">No saved plans yet.</div>'; return; }
+      listEl.innerHTML = plans.map(p => `
+        <div class="plan-card" id="pc-${p.id}">
+          <button class="plan-card-del" onclick="deletePlan('${p.id}')" title="Delete">🗑</button>
+          <div class="plan-card-title">✈️ ${p.destination}</div>
+          <div class="plan-card-meta">${p.duration_days} days · ¥${Number(p.budget_jpy).toLocaleString()} · ${new Date(p.created_at).toLocaleDateString()}</div>
+          <span class="plan-card-view" onclick="viewSavedPlan(${JSON.stringify(p.plan_content).replace(/'/g, "&#39;")}, '${p.destination}')">View Plan →</span>
+        </div>`).join('');
+    } catch { listEl.innerHTML = '<div style="text-align:center;color:#94a3b8">Failed to load plans.</div>'; }
+  }
+
+  async function deletePlan(id) {
+    if (!confirm('Delete this plan?')) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    await fetch(`/api/plans/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${session.access_token}` } });
+    document.getElementById(`pc-${id}`)?.remove();
+  }
+
+  function viewSavedPlan(content, destination) {
+    closePlansModal();
+    rawPlanText = content;
+    document.getElementById('planContent').innerHTML = marked.parse(content);
+    showVisuals(destination);
+    document.getElementById('visuals').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // Call initSupabase when page loads
+  initSupabase();
 </script>
 
 </body>
