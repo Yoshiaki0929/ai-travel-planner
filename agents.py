@@ -380,9 +380,9 @@ def _extract_travel_params(user_request: str) -> dict:
             if m:
                 budget = int(m.group(1)) * 10_000
             else:
-                m = re.search(r'(\d{4,})\s*円', user_request)
+                m = re.search(r'([\d,]{4,})\s*円', user_request)
                 if m:
-                    budget = int(m.group(1))
+                    budget = int(m.group(1).replace(',', ''))
 
     # Number of people — English: "X people/persons/travelers", Japanese: "X人"
     num_people = 2  # default
@@ -462,6 +462,8 @@ def orchestrate_travel_plan(user_request: str) -> str:
     system_prompt = """You are a professional English-language travel planner.
 Using the provided JSON data, create a well-structured, engaging travel plan in Markdown.
 
+CRITICAL: Use ONLY the budget figures from the [Budget Breakdown] JSON data. Do NOT invent or change any budget numbers. The "Total Budget" and "Per Person Budget" values in the JSON are the correct ones to display.
+
 Always follow this structure:
 
 ## 🌍 Travel Plan: [Destination]
@@ -473,7 +475,7 @@ Always follow this structure:
 (Climate, language, currency, and top highlights)
 
 ### 💰 Budget Breakdown
-(Cost allocation in a table or list format)
+(Copy the exact budget figures from the JSON data in a table or list format)
 
 ### 📅 Day-by-Day Itinerary
 (Detailed schedule from Day 1 to the final day)
