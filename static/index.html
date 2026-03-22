@@ -523,6 +523,25 @@
     const errorEl = document.getElementById('error');
     const visuals = document.getElementById('visuals');
 
+    // Client-side validation
+    const destVal = document.getElementById('destination').value.trim();
+    const daysVal = parseInt(document.getElementById('duration_days').value);
+    const peopleVal = parseInt(document.getElementById('num_people').value);
+    const budgetVal = getBudgetInJPY();
+    const minBudget = 10000 * peopleVal * daysVal;
+
+    let validationMsg = '';
+    if (!destVal) validationMsg = '⚠️ Please enter a destination (e.g. Paris, Tokyo, Bali).';
+    else if (daysVal < 1 || daysVal > 60) validationMsg = '⚠️ Trip duration must be between 1 and 60 days.';
+    else if (peopleVal < 1 || peopleVal > 20) validationMsg = '⚠️ Number of travelers must be between 1 and 20.';
+    else if (budgetVal < minBudget) validationMsg = `⚠️ Budget is too low. For ${peopleVal} person(s) over ${daysVal} day(s), please enter at least ¥${minBudget.toLocaleString()}.`;
+
+    if (validationMsg) {
+      errorEl.textContent = validationMsg;
+      errorEl.classList.add('active');
+      return;
+    }
+
     // Reset
     visuals.classList.remove('active');
     errorEl.classList.remove('active');
@@ -555,7 +574,10 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (!response.ok) throw new Error(`Server error: ${response.status}`);
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(errBody.error || `Server error: ${response.status}`);
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');

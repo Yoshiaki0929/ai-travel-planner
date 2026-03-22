@@ -348,6 +348,12 @@ def _extract_travel_params(user_request: str) -> dict:
         if m:
             destination = m.group(1)
 
+    # Final fallback: read destination from the structured 【旅行先】 tag
+    if destination == "destination":
+        m = re.search(r'【旅行先】\s*(.+?)(?:\n|【)', user_request)
+        if m:
+            destination = m.group(1).strip()
+
     # Duration — English patterns: "X days", "X-day", "X nights" (+1)
     duration_days = 4  # default
     m = re.search(r'(\d+)\s*-?\s*(?:day|days)', user_request, re.IGNORECASE)

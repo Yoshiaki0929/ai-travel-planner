@@ -30,9 +30,27 @@ async def root():
     return FileResponse("static/index.html")
 
 
+def _validate_travel_request(r: "TravelRequest"):
+    if not r.destination.strip():
+        return "Please enter a destination (e.g. Paris, Tokyo, Bali)."
+    if r.duration_days < 1 or r.duration_days > 60:
+        return "Trip duration must be between 1 and 60 days."
+    if r.num_people < 1 or r.num_people > 20:
+        return "Number of travelers must be between 1 and 20."
+    min_budget = 10000 * r.num_people * r.duration_days
+    if r.budget_jpy < min_budget:
+        return (f"A budget of ¥{r.budget_jpy:,} is too low for {r.num_people} person(s) "
+                f"over {r.duration_days} day(s). Please enter at least ¥{min_budget:,}.")
+    return None
+
+
 @app.post("/api/plan")
 async def create_plan(travel_request: TravelRequest):
     """旅行プランを生成するエンドポイント（同期）"""
+
+    validation_error = _validate_travel_request(travel_request)
+    if validation_error:
+        return JSONResponse(status_code=400, content={"error": validation_error})
 
     user_message = f"""
 以下の条件で旅行プランを作成してください：
@@ -59,6 +77,10 @@ async def create_plan(travel_request: TravelRequest):
 @app.post("/api/plan/stream")
 async def create_plan_stream(travel_request: TravelRequest):
     """旅行プランをSSEストリームで返すエンドポイント"""
+
+    validation_error = _validate_travel_request(travel_request)
+    if validation_error:
+        return JSONResponse(status_code=400, content={"error": validation_error})
 
     user_message = f"""
 以下の条件で旅行プランを作成してください：
