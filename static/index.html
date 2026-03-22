@@ -136,8 +136,20 @@
     /* Videos */
     .video-section { display: flex; flex-direction: column; gap: 1.5rem; }
     .video-block h3 { font-size: 1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
-    .youtube-embed { width: 100%; aspect-ratio: 16/9; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); border: none; }
+    .yt-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 0.5rem; }
+    @media (max-width: 500px) { .yt-grid { grid-template-columns: 1fr; } }
+    .yt-card { display: flex; flex-direction: column; border-radius: 0.75rem; overflow: hidden; text-decoration: none; background: #fff; border: 1.5px solid #e2e8f0; transition: all 0.2s; }
+    .yt-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); border-color: #ff0000; }
+    .yt-thumb { position: relative; padding-top: 56.25%; }
+    .yt-thumb-bg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    .yt-play-btn { width: 48px; height: 48px; background: rgba(255,0,0,0.92); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.3rem; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+    .yt-thumb-emoji { position: absolute; bottom: 0.5rem; right: 0.6rem; font-size: 1.8rem; line-height: 1; }
+    .yt-card-info { padding: 0.6rem 0.75rem 0.75rem; }
+    .yt-card-title { font-weight: 700; color: #0f172a; font-size: 0.88rem; }
+    .yt-card-sub { color: #ff0000; font-size: 0.75rem; font-weight: 600; margin-top: 0.25rem; }
     .tiktok-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    /* Photo loading */
+    .photo-loading { grid-column: 1/-1; text-align: center; padding: 2rem; color: #94a3b8; font-size: 0.9rem; }
     .tiktok-btn {
       display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem;
       background: #000; color: white; border-radius: 0.75rem; text-decoration: none;
@@ -318,7 +330,7 @@
     <div class="tab-panel card" id="tab-photos">
       <div class="card-title">📸 Destination Photos</div>
       <div class="photo-grid" id="photoGrid"></div>
-      <p class="photo-caption">Photos via Unsplash</p>
+      <p class="photo-caption">Photos via Wikimedia Commons</p>
     </div>
 
     <!-- Tab: Videos -->
@@ -327,17 +339,12 @@
       <div class="video-section">
 
         <div class="video-block">
-          <h3>▶️ YouTube — Travel Guide</h3>
-          <iframe id="youtubeEmbed" class="youtube-embed" src="" allowfullscreen loading="lazy"></iframe>
+          <h3>▶️ YouTube</h3>
+          <div id="videoLinks"></div>
         </div>
 
         <div class="video-block">
-          <h3>▶️ YouTube — Travel Vlog</h3>
-          <iframe id="youtubeEmbed2" class="youtube-embed" src="" allowfullscreen loading="lazy"></iframe>
-        </div>
-
-        <div class="video-block">
-          <h3>🎵 TikTok &amp; More</h3>
+          <h3>🎵 Social &amp; More</h3>
           <div class="tiktok-row" id="socialLinks"></div>
         </div>
 
@@ -431,31 +438,61 @@
     } catch (e) { console.error('Map error:', e); }
   }
 
-  // ===== Photos =====
-  function loadPhotos(destination) {
+  // ===== Photos (Wikipedia Commons API — free, no key) =====
+  async function loadPhotos(destination) {
     const grid = document.getElementById('photoGrid');
-    const themes = ['travel,city', 'food,restaurant', 'landmark,architecture', 'culture,people', 'nature,landscape', 'street,market'];
-    const enc = encodeURIComponent(destination);
-    grid.innerHTML = themes.map(theme =>
-      `<img src="https://source.unsplash.com/600x400/?${enc},${theme}" alt="${destination} - ${theme}" loading="lazy" onerror="this.style.display='none'" />`
-    ).join('');
+    grid.innerHTML = '<div class="photo-loading">📷 Loading photos...</div>';
+    try {
+      const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(destination)}&prop=pageimages&piprop=thumbnail&pithumbsize=640&format=json&origin=*&gsrnamespace=0&gsrlimit=12`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      const pages = Object.values(data.query?.pages || {})
+        .filter(p => p.thumbnail?.source)
+        .slice(0, 6);
+      if (!pages.length) {
+        grid.innerHTML = `<div class="photo-loading">No photos found. <a href="https://www.google.com/search?q=${encodeURIComponent(destination+' travel')}&tbm=isch" target="_blank" style="color:#0891b2">Search on Google Images →</a></div>`;
+        return;
+      }
+      grid.innerHTML = pages.map(p =>
+        `<img src="${p.thumbnail.source.replace(/\/\d+px-/, '/640px-')}" alt="${p.title}" loading="lazy" />`
+      ).join('');
+    } catch (e) {
+      grid.innerHTML = `<div class="photo-loading">Could not load photos.</div>`;
+    }
   }
 
-  // ===== YouTube =====
+  // ===== YouTube link cards (search embed was discontinued) =====
   function loadVideos(destination) {
-    const enc = encodeURIComponent(destination + ' travel guide');
-    const enc2 = encodeURIComponent(destination + ' travel vlog');
-    document.getElementById('youtubeEmbed').src = `https://www.youtube.com/embed?listType=search&list=${enc}`;
-    document.getElementById('youtubeEmbed2').src = `https://www.youtube.com/embed?listType=search&list=${enc2}`;
+    const searches = [
+      { emoji: '🗺️', color: '#c00', label: 'Travel Guide',  q: destination + ' travel guide' },
+      { emoji: '📹', color: '#900', label: 'Travel Vlog',    q: destination + ' vlog 2025' },
+      { emoji: '🍜', color: '#600', label: 'Food & Culture', q: destination + ' food culture' },
+      { emoji: '✈️', color: '#303', label: 'Travel Tips',    q: destination + ' travel tips' },
+    ];
+    document.getElementById('videoLinks').innerHTML =
+      `<div class="yt-grid">` +
+      searches.map(s => `
+        <a class="yt-card" href="https://www.youtube.com/results?search_query=${encodeURIComponent(s.q)}" target="_blank" rel="noopener">
+          <div class="yt-thumb">
+            <div class="yt-thumb-bg" style="background:linear-gradient(135deg,${s.color},#111)">
+              <div class="yt-play-btn">▶</div>
+            </div>
+            <div class="yt-thumb-emoji">${s.emoji}</div>
+          </div>
+          <div class="yt-card-info">
+            <div class="yt-card-title">${s.label} — ${destination}</div>
+            <div class="yt-card-sub">Search on YouTube →</div>
+          </div>
+        </a>`).join('') +
+      `</div>`;
 
-    const socialLinks = document.getElementById('socialLinks');
     const encDest = encodeURIComponent(destination + ' travel');
-    socialLinks.innerHTML = `
+    document.getElementById('socialLinks').innerHTML = `
       <a class="tiktok-btn" href="https://www.tiktok.com/search?q=${encDest}" target="_blank" rel="noopener">
         <span class="tiktok-icon">🎵</span> TikTok Videos
       </a>
       <a class="youtube-link-btn" href="https://www.youtube.com/results?search_query=${encDest}" target="_blank" rel="noopener">
-        ▶ More on YouTube
+        ▶ All YouTube
       </a>
       <a class="tiktok-btn" style="background:#E1306C;" href="https://www.instagram.com/explore/tags/${encodeURIComponent(destination.replace(/\s/g,''))}travel/" target="_blank" rel="noopener">
         📸 Instagram
@@ -467,12 +504,17 @@
   function showVisuals(destination) {
     document.getElementById('visuals').classList.add('active');
 
-    // Hero
+    // Hero — fetch from Wikipedia summary (free, no key)
     document.getElementById('heroTitle').textContent = '✈️ ' + destination;
-    const enc = encodeURIComponent(destination);
-    document.getElementById('heroImg').src = `https://source.unsplash.com/1600x500/?${enc},travel,city`;
+    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(destination)}`)
+      .then(r => r.json())
+      .then(d => {
+        const src = d.originalimage?.source || d.thumbnail?.source;
+        if (src) document.getElementById('heroImg').src = src;
+      })
+      .catch(() => {});
 
-    // Photos
+    // Photos (async — fire and forget)
     loadPhotos(destination);
 
     // Videos
