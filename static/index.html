@@ -504,13 +504,18 @@
   function showVisuals(destination) {
     document.getElementById('visuals').classList.add('active');
 
-    // Hero — fetch from Wikipedia summary (free, no key)
+    // Hero — use Wikipedia page-image search (same API as photo grid, skips SVG map icons)
     document.getElementById('heroTitle').textContent = '✈️ ' + destination;
-    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(destination)}`)
+    fetch(`https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(destination)}&prop=pageimages&piprop=thumbnail&pithumbsize=1200&format=json&origin=*&gsrnamespace=0&gsrlimit=6`)
       .then(r => r.json())
-      .then(d => {
-        const src = d.originalimage?.source || d.thumbnail?.source;
-        if (src) document.getElementById('heroImg').src = src;
+      .then(data => {
+        const pages = Object.values(data.query?.pages || {})
+          .filter(p => p.thumbnail?.source && !p.thumbnail.source.includes('.svg.'))
+          .sort((a, b) => (a.index || 99) - (b.index || 99));
+        if (pages.length > 0) {
+          const src = pages[0].thumbnail.source.replace(/\/\d+px-/, '/1200px-');
+          document.getElementById('heroImg').src = src;
+        }
       })
       .catch(() => {});
 
