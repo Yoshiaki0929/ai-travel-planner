@@ -1,10 +1,11 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.responses import StreamingResponse, FileResponse, JSONResponse
 from pydantic import BaseModel
 import json
 import os
 import asyncio
+import traceback
 from agents import orchestrate_travel_plan
 
 app = FastAPI(title="AI Travel Planner")
@@ -47,8 +48,12 @@ async def create_plan(travel_request: TravelRequest):
 旅行先調査、予算計算、日程作成、体験提案の全ツールを使って、完全な旅行プランを作成してください。
 """
 
-    result = orchestrate_travel_plan(user_message)
-    return {"plan": result}
+    try:
+        result = orchestrate_travel_plan(user_message)
+        return {"plan": result}
+    except Exception as e:
+        error_detail = traceback.format_exc()
+        return JSONResponse(status_code=500, content={"error": str(e), "detail": error_detail})
 
 
 @app.post("/api/plan/stream")
