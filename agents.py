@@ -7,7 +7,7 @@ client = OpenAI(
     api_key=os.environ.get("GEMINI_API_KEY", ""),
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
 )
-MODEL = "gemini-2.0-flash-lite"
+MODEL = "gemini-2.5-flash"
 
 
 def research_destination(destination: str, travel_dates: str) -> str:
