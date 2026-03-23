@@ -883,13 +883,13 @@
     document.getElementById('visuals').scrollIntoView({ behavior: 'smooth' });
   }
 
-  // Attach login button listener (avoids global scope lookup)
-  document.addEventListener('DOMContentLoaded', function() {
+  // Attach login button listener directly (script runs after DOM is ready)
+  (function() {
     var btn = document.getElementById('loginBtn');
     if (btn) btn.addEventListener('click', function() {
       document.getElementById('loginModal').classList.add('open');
     });
-  });
+  })();
 
   // Call initSupabase when page loads
   initSupabase();
