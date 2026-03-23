@@ -1,3 +1,10 @@
+# ローカル開発用: .envファイルを最初に読み込む（agents.pyのimport前に必要）
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 from fastapi import FastAPI, Request, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse, FileResponse, JSONResponse
@@ -105,11 +112,12 @@ async def create_plan_stream(travel_request: TravelRequest):
         yield f"data: {json.dumps({'type': 'progress', 'message': '🔍 旅行先の情報を調査中...'}, ensure_ascii=False)}\n\n"
         await asyncio.sleep(0)
 
-        # Run synchronous in executor to not block event loop
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, orchestrate_travel_plan, user_message)
-
-        yield f"data: {json.dumps({'type': 'complete', 'plan': result}, ensure_ascii=False)}\n\n"
+        try:
+            loop = asyncio.get_running_loop()
+            result = await loop.run_in_executor(None, orchestrate_travel_plan, user_message)
+            yield f"data: {json.dumps({'type': 'complete', 'plan': result}, ensure_ascii=False)}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)}, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
 

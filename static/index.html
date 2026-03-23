@@ -729,6 +729,11 @@
             saveBtn.disabled = false;
             saveBtn.textContent = '💾 Save Plan';
             setTimeout(() => { document.getElementById('visuals').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+          } else if (data.type === 'error') {
+            stopProgress();
+            loadingEl.classList.remove('active');
+            errorEl.textContent = `Error: ${data.message}`;
+            errorEl.classList.add('active');
           }
         }
       }
@@ -744,7 +749,7 @@
   });
 
   // ===== AUTH (Supabase) =====
-  let supabase = null;
+  let supabaseClient = null;
   let currentUser = null;
   let currentPlanData = null; // stores latest plan for saving
 
@@ -752,10 +757,10 @@
     try {
       const cfg = await fetch('/api/config').then(r => r.json());
       if (!cfg.supabase_url || !cfg.supabase_anon_key) return;
-      supabase = window.supabase.createClient(cfg.supabase_url, cfg.supabase_anon_key);
+      supabaseClient = window.supabase.createClient(cfg.supabase_url, cfg.supabase_anon_key);
 
       // Listen to auth state changes
-      supabase.auth.onAuthStateChange(async (event, session) => {
+      supabaseClient.auth.onAuthStateChange(async (event, session) => {
         if (session?.user) {
           currentUser = session.user;
           renderUserMenu(session.user);
@@ -766,7 +771,7 @@
       });
 
       // Check existing session
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabaseClient.auth.getSession();
       if (session?.user) {
         currentUser = session.user;
         renderUserMenu(session.user);
@@ -820,25 +825,25 @@
   window.closePlansModal = function() { document.getElementById('plansModal').classList.remove('open'); }
 
   window.signInWithGoogle = async function() {
-    if (!supabase) return alert('Auth not configured yet.');
-    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+    if (!supabaseClient) return alert('Auth not configured yet.');
+    await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
   }
   window.signInWithGitHub = async function() {
-    if (!supabase) return alert('Auth not configured yet.');
-    await supabase.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: window.location.origin } });
+    if (!supabaseClient) return alert('Auth not configured yet.');
+    await supabaseClient.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: window.location.origin } });
   }
   window.signOut = async function() {
-    if (!supabase) return;
-    await supabase.auth.signOut();
+    if (!supabaseClient) return;
+    await supabaseClient.auth.signOut();
     renderLoginBtn();
   }
 
   async function savePlan() {
-    if (!currentUser || !supabase) { openLoginModal(); return; }
+    if (!currentUser || !supabaseClient) { openLoginModal(); return; }
     if (!currentPlanData) return;
     const btn = document.getElementById('savePlanBtn');
     btn.disabled = true; btn.textContent = 'Saving...';
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
     try {
       const resp = await fetch('/api/plans/save', {
         method: 'POST',
@@ -851,10 +856,10 @@
   }
 
   async function loadSavedPlans() {
-    if (!supabase) return;
+    if (!supabaseClient) return;
     const listEl = document.getElementById('plansList');
     listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:1rem">Loading...</div>';
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) { listEl.innerHTML = '<div style="text-align:center;color:#94a3b8">Not logged in</div>'; return; }
     try {
       const plans = await fetch('/api/plans', { headers: { 'Authorization': `Bearer ${session.access_token}` } }).then(r => r.json());
@@ -871,7 +876,7 @@
 
   async function deletePlan(id) {
     if (!confirm('Delete this plan?')) return;
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
     await fetch(`/api/plans/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${session.access_token}` } });
     document.getElementById(`pc-${id}`)?.remove();
   }
