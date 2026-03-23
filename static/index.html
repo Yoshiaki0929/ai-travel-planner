@@ -776,7 +776,8 @@
 
   function renderLoginBtn() {
     document.getElementById('authControls').innerHTML =
-      `<button class="auth-btn" onclick="openLoginModal()" id="loginBtn">Sign In</button>`;
+      `<button class="auth-btn" id="loginBtn">Sign In</button>`;
+    document.getElementById('loginBtn').addEventListener('click', openLoginModal);
   }
 
   function renderUserMenu(user) {
