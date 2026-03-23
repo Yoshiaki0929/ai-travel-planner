@@ -809,24 +809,24 @@
     }
   }
 
-  function openLoginModal() { document.getElementById('loginModal').classList.add('open'); }
-  function closeLoginModal() { document.getElementById('loginModal').classList.remove('open'); }
-  function openPlansModal() {
+  window.openLoginModal = function() { document.getElementById('loginModal').classList.add('open'); }
+  window.closeLoginModal = function() { document.getElementById('loginModal').classList.remove('open'); }
+  window.openPlansModal = function() {
     document.getElementById('userDropdown')?.classList.remove('open');
     document.getElementById('plansModal').classList.add('open');
     loadSavedPlans();
   }
-  function closePlansModal() { document.getElementById('plansModal').classList.remove('open'); }
+  window.closePlansModal = function() { document.getElementById('plansModal').classList.remove('open'); }
 
-  async function signInWithGoogle() {
+  window.signInWithGoogle = async function() {
     if (!supabase) return alert('Auth not configured yet.');
     await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
   }
-  async function signInWithGitHub() {
+  window.signInWithGitHub = async function() {
     if (!supabase) return alert('Auth not configured yet.');
     await supabase.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: window.location.origin } });
   }
-  async function signOut() {
+  window.signOut = async function() {
     if (!supabase) return;
     await supabase.auth.signOut();
     renderLoginBtn();
