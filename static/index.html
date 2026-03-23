@@ -249,7 +249,7 @@
   <h1>AI Travel Planner</h1>
   <p>Gemini AI crafts your perfect trip</p>
     <div style="position:absolute;top:1rem;right:1rem;display:flex;align-items:center;gap:0.5rem;" id="authControls">
-      <button class="auth-btn" onclick="openLoginModal()" id="loginBtn">Sign In</button>
+      <button class="auth-btn" id="loginBtn">Sign In</button>
     </div>
 </header>
 
@@ -882,6 +882,14 @@
     showVisuals(destination);
     document.getElementById('visuals').scrollIntoView({ behavior: 'smooth' });
   }
+
+  // Attach login button listener (avoids global scope lookup)
+  document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('loginBtn');
+    if (btn) btn.addEventListener('click', function() {
+      document.getElementById('loginModal').classList.add('open');
+    });
+  });
 
   // Call initSupabase when page loads
   initSupabase();
