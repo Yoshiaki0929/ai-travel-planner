@@ -9,3 +9,10 @@ build/
 venv/
 .venv/
 qa_report.md
+
+# Laravel
+laravel/vendor/
+laravel/node_modules/
+laravel/.env
+laravel/storage/logs/
+laravel/bootstrap/cache/*.php
