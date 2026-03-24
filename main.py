@@ -861,13 +861,19 @@ async def get_chat_rooms(authorization: str = Header(None)):
 
 
 @app.post("/api/chat/rooms")
-async def create_chat_room(body: CreateRoomRequest, authorization: str = Header(None)):
+async def create_chat_room(request: Request, authorization: str = Header(None)):
     """Create a custom chat room."""
     user = await get_current_user(authorization)
     if not user:
         return JSONResponse(status_code=401, content={"error": "Not authenticated"})
 
-    name = body.name.strip()[:50]
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"error": "Invalid JSON body"})
+    body = CreateRoomRequest(**{k: data[k] for k in data if k in CreateRoomRequest.model_fields})
+
+    name = body.name.strip()[:50] if hasattr(body, 'name') and body.name else ""
     if not name:
         return JSONResponse(status_code=400, content={"error": "Room name is required"})
 
