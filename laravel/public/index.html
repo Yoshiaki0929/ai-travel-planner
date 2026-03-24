@@ -540,6 +540,70 @@
     .upload-submit-btn:disabled { background: #94a3b8; cursor: not-allowed; }
     .share-photo-btn { background: #f0f9ff; border: 1.5px solid #bae6fd; border-radius: 0.6rem; padding: 0.5rem 1rem; font-size: 0.85rem; font-weight: 700; color: #0891b2; cursor: pointer; transition: all 0.2s; }
     .share-photo-btn:hover { background: #e0f2fe; }
+
+    /* nav-btn used for chat/timeline nav in presets bar */
+    .nav-btn { background: white; border: 2px solid #e2e8f0; border-radius: 2rem; padding: 0.45rem 1rem; font-size: 0.88rem; font-weight: 600; color: #0891b2; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .nav-btn:hover { background: #0891b2; border-color: #0891b2; color: white; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(8,145,178,0.3); }
+
+    /* ===== CHAT ===== */
+    #chat { display:none; position:fixed; inset:0; z-index:40; background:#f8fafc; flex-direction:column; }
+    #chat.active { display:flex; }
+    .chat-layout { display:flex; height:100%; overflow:hidden; }
+    .chat-sidebar { width:280px; min-width:280px; background:#1e293b; color:#e2e8f0; display:flex; flex-direction:column; border-right:1px solid #334155; }
+    .chat-sidebar-header { padding:1rem 1.25rem; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between; }
+    .chat-sidebar-title { font-size:1.1rem; font-weight:700; color:#f1f5f9; }
+    .chat-new-room-btn { background:#3b82f6; color:white; border:none; border-radius:0.5rem; padding:0.35rem 0.75rem; font-size:0.82rem; font-weight:600; cursor:pointer; }
+    .chat-new-room-btn:hover { background:#2563eb; }
+    .chat-room-list { flex:1; overflow-y:auto; padding:0.5rem 0; }
+    .chat-section-label { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#94a3b8; padding:0.75rem 1.25rem 0.35rem; }
+    .chat-room-item { padding:0.6rem 1.25rem; cursor:pointer; border-radius:0; transition:background 0.15s; display:flex; align-items:center; gap:0.65rem; }
+    .chat-room-item:hover { background:#334155; }
+    .chat-room-item.active { background:#3b82f6; }
+    .chat-room-item .room-icon { font-size:1.1rem; flex-shrink:0; }
+    .chat-room-item .room-info { flex:1; min-width:0; }
+    .chat-room-item .room-name { font-size:0.88rem; font-weight:600; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .chat-room-item .room-last { font-size:0.75rem; color:#94a3b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:0.1rem; }
+    .chat-sidebar-footer { padding:0.75rem 1.25rem; border-top:1px solid #334155; }
+    .chat-back-btn { background:none; border:none; color:#94a3b8; cursor:pointer; font-size:0.88rem; padding:0; }
+    .chat-back-btn:hover { color:#e2e8f0; }
+    .chat-main { flex:1; display:flex; flex-direction:column; min-width:0; background:#fff; }
+    .chat-main-header { padding:0.9rem 1.25rem; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; gap:0.75rem; background:#fff; }
+    .chat-main-title { font-size:1rem; font-weight:700; color:#0f172a; flex:1; }
+    .chat-messages { flex:1; overflow-y:auto; padding:1rem 1.25rem; display:flex; flex-direction:column; gap:0.75rem; }
+    .chat-message { display:flex; gap:0.65rem; align-items:flex-start; }
+    .chat-message.own { flex-direction:row-reverse; }
+    .chat-avatar { width:36px; height:36px; border-radius:50%; object-fit:cover; flex-shrink:0; background:#e2e8f0; display:flex; align-items:center; justify-content:center; font-size:1rem; overflow:hidden; }
+    .chat-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    .chat-bubble-wrap { display:flex; flex-direction:column; max-width:70%; }
+    .chat-message.own .chat-bubble-wrap { align-items:flex-end; }
+    .chat-meta { font-size:0.72rem; color:#94a3b8; margin-bottom:0.2rem; }
+    .chat-bubble { background:#f1f5f9; border-radius:1rem; padding:0.55rem 0.9rem; font-size:0.9rem; color:#1e293b; word-break:break-word; white-space:pre-wrap; line-height:1.5; }
+    .chat-message.own .chat-bubble { background:#3b82f6; color:#fff; }
+    .chat-input-bar { padding:0.9rem 1.25rem; border-top:1px solid #e2e8f0; display:flex; gap:0.75rem; align-items:flex-end; background:#fff; }
+    .chat-input { flex:1; border:1.5px solid #e2e8f0; border-radius:1rem; padding:0.6rem 1rem; font-size:0.9rem; resize:none; outline:none; max-height:120px; overflow-y:auto; font-family:inherit; line-height:1.5; }
+    .chat-input:focus { border-color:#3b82f6; }
+    .chat-send-btn { background:#3b82f6; color:white; border:none; border-radius:0.75rem; padding:0.6rem 1.1rem; font-size:0.9rem; font-weight:600; cursor:pointer; flex-shrink:0; }
+    .chat-send-btn:hover { background:#2563eb; }
+    .chat-send-btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .chat-empty { text-align:center; color:#94a3b8; padding:3rem 1rem; font-size:0.9rem; }
+    .chat-no-room { flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:0.5rem; color:#94a3b8; }
+    /* Create room modal */
+    .create-room-modal { display:none; position:fixed; inset:0; z-index:60; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; }
+    .create-room-modal.open { display:flex; }
+    .create-room-box { background:#fff; border-radius:1rem; padding:1.5rem; width:90%; max-width:380px; }
+    .create-room-title { font-size:1rem; font-weight:700; color:#0f172a; margin-bottom:1rem; }
+    .create-room-input { width:100%; border:1.5px solid #e2e8f0; border-radius:0.5rem; padding:0.6rem 0.9rem; font-size:0.9rem; outline:none; box-sizing:border-box; margin-bottom:0.75rem; }
+    .create-room-input:focus { border-color:#3b82f6; }
+    .create-room-privacy { display:flex; gap:0.75rem; margin-bottom:1rem; }
+    .create-room-privacy label { display:flex; align-items:center; gap:0.4rem; font-size:0.88rem; cursor:pointer; }
+    .create-room-actions { display:flex; gap:0.5rem; justify-content:flex-end; }
+    .create-room-cancel { background:none; border:1.5px solid #e2e8f0; border-radius:0.5rem; padding:0.5rem 1rem; font-size:0.88rem; cursor:pointer; }
+    .create-room-submit { background:#3b82f6; color:white; border:none; border-radius:0.5rem; padding:0.5rem 1rem; font-size:0.88rem; font-weight:600; cursor:pointer; }
+    @media (max-width:640px) {
+      .chat-sidebar { position:absolute; left:-280px; top:0; bottom:0; z-index:10; transition:left 0.2s; }
+      .chat-sidebar.open { left:0; }
+      .chat-main { width:100%; }
+    }
   </style>
 </head>
 <body>
@@ -587,6 +651,7 @@
     <button class="preset-btn" onclick="applyPreset('paris')">🗼 Paris 5 Days</button>
     <button class="preset-btn" onclick="applyPreset('tokyo')">🗾 Tokyo 3 Days</button>
     <button class="preset-btn" onclick="showTimeline()" style="margin-left:auto" data-i18n="timelineNav">📷 Timeline</button>
+    <button id="chatNavBtn" class="nav-btn" onclick="showChat()" data-i18n="chatNav">💬 Chat</button>
   </div>
 
   <!-- Form Card -->
@@ -909,6 +974,58 @@
 
 </main>
 
+<!-- Chat -->
+<div id="chat">
+  <div class="chat-layout">
+    <!-- Sidebar -->
+    <div class="chat-sidebar" id="chatSidebar">
+      <div class="chat-sidebar-header">
+        <span class="chat-sidebar-title" data-i18n="chatTitle">💬 Chat</span>
+        <button class="chat-new-room-btn" onclick="openCreateRoomModal()" data-i18n="chatNewRoom">+ New Room</button>
+      </div>
+      <div class="chat-room-list" id="chatRoomList">
+        <div class="chat-empty" data-i18n="loadingText">Loading...</div>
+      </div>
+      <div class="chat-sidebar-footer">
+        <button class="chat-back-btn" onclick="hideChat()">← <span data-i18n="backToPlanner">Back to Planner</span></button>
+      </div>
+    </div>
+    <!-- Main -->
+    <div class="chat-main" id="chatMain">
+      <div class="chat-no-room" id="chatNoRoom">
+        <span style="font-size:2.5rem">💬</span>
+        <span data-i18n="chatSelectRoom">Select a room to start chatting</span>
+      </div>
+      <div id="chatWindow" style="display:none;flex:1;flex-direction:column;height:100%">
+        <div class="chat-main-header">
+          <span class="chat-main-title" id="chatRoomTitle"></span>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-bar">
+          <textarea class="chat-input" id="chatInput" rows="1" placeholder="Type a message... (Enter to send)" maxlength="1000"></textarea>
+          <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()" data-i18n="chatSend">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Room Modal -->
+<div class="create-room-modal" id="createRoomModal" onclick="if(event.target===this)closeCreateRoomModal()">
+  <div class="create-room-box">
+    <div class="create-room-title" data-i18n="chatCreateRoom">Create a Room</div>
+    <input class="create-room-input" id="newRoomName" type="text" maxlength="50" data-i18n-ph="chatRoomNamePh" placeholder="Room name...">
+    <div class="create-room-privacy">
+      <label><input type="radio" name="roomPrivacy" value="public" checked> <span data-i18n="visibilityPublic">Public</span></label>
+      <label><input type="radio" name="roomPrivacy" value="private"> <span data-i18n="visibilityPrivate">Private</span></label>
+    </div>
+    <div class="create-room-actions">
+      <button class="create-room-cancel" onclick="closeCreateRoomModal()" data-i18n="profileCancel">Cancel</button>
+      <button class="create-room-submit" onclick="submitCreateRoom()" data-i18n="chatCreate">Create</button>
+    </div>
+  </div>
+</div>
+
 <!-- Mention dropdown (body-level to avoid overflow:hidden clipping) -->
 <div class="mention-dropdown" id="mentionDropdown" style="display:none;position:fixed;"></div>
 
@@ -1004,6 +1121,21 @@
       bookAgodaTip: 'Best deals in Asia — exclusive member discounts.',
       bookHotelsTip: 'Price-match guarantee and earn rewards on every stay.',
       bookHotelNote: '👉 See the Stay tab for detailed hotel recommendations.',
+      chatNav: '💬 Chat',
+      chatTitle: '💬 Chat',
+      chatNewRoom: '+ New Room',
+      chatGlobal: '🌍 Global',
+      chatDMs: 'Direct Messages',
+      chatPlanRooms: 'Travel Plans',
+      chatRooms: 'Rooms',
+      chatNoRooms: 'No rooms yet.',
+      chatSelectRoom: 'Select a room to start chatting',
+      chatEmpty: 'No messages yet. Say hello!',
+      chatSend: 'Send',
+      chatCreateRoom: 'Create a Room',
+      chatRoomNamePh: 'Room name...',
+      chatCreate: 'Create',
+      chatDM: 'Direct Message',
       stay: {
         'Resort & Relaxation': { icon:'🏖️', label:'Luxury Resort Stay', desc:'For a relaxing trip, we recommend resort hotels or private villas with pool access.', hotelLabel:'Luxury Hotels & Resorts', hotelTip:'Look for all-inclusive resorts or hotels with spa facilities.', airbnbLabel:'Private Villa with Pool', airbnbTip:'Entire villa or house with private pool — perfect for unwinding.', bookingTip:'Filter by "Resort" or "Spa hotel" categories.' },
         'Sightseeing-focused': { icon:'🏛️', label:'Central & Well-Connected', desc:'Stay close to major landmarks and public transport to maximize sightseeing time.', hotelLabel:'City Center Hotels', hotelTip:'Near train stations and main attractions for easy access.', airbnbLabel:'Central Apartments', airbnbTip:'Apartment in the heart of the city — walkable to top sights.', bookingTip:'Sort by distance to city center. Look for "Excellent Location" badge.' },
@@ -1097,6 +1229,21 @@
       bookAgodaTip: 'アジア最強の価格 — 会員限定の割引も充実。',
       bookHotelsTip: '料金保証付きで、滞在するたびにポイントが貯まる。',
       bookHotelNote: '👉 宿泊の詳細はStayタブをご覧ください。',
+      chatNav: '💬 チャット',
+      chatTitle: '💬 チャット',
+      chatNewRoom: '+ 新規ルーム',
+      chatGlobal: '🌍 グローバル',
+      chatDMs: 'ダイレクトメッセージ',
+      chatPlanRooms: '旅行プラン',
+      chatRooms: 'ルーム',
+      chatNoRooms: 'ルームがありません。',
+      chatSelectRoom: 'チャットを始めるルームを選んでください',
+      chatEmpty: 'まだメッセージがありません。最初の一言を！',
+      chatSend: '送信',
+      chatCreateRoom: 'ルームを作成',
+      chatRoomNamePh: 'ルーム名...',
+      chatCreate: '作成',
+      chatDM: 'ダイレクトメッセージ',
       stay: {
         'Resort & Relaxation': { icon:'🏖️', label:'ラグジュアリー・リゾート滞在', desc:'リラックスの旅には、リゾートホテルやプール付きヴィラがおすすめです。', hotelLabel:'ラグジュアリーホテル・リゾート', hotelTip:'オールインクルーシブやスパ付きホテルを探してみましょう。', airbnbLabel:'プール付きプライベートヴィラ', airbnbTip:'プール付きの一棟貸し物件でとことん贅沢に。', bookingTip:'「リゾート」「スパホテル」カテゴリで絞り込みましょう。' },
         'Sightseeing-focused': { icon:'🏛️', label:'中心部・アクセス重視', desc:'主要観光地や交通機関の近くに泊まり、効率よく観光しましょう。', hotelLabel:'シティセンターホテル', hotelTip:'駅や主要観光地のそばで移動をスムーズに。', airbnbLabel:'中心部のアパートメント', airbnbTip:'街の中心に泊まり、主要スポットへ徒歩でアクセス。', bookingTip:'「市内中心からの距離」で並び替え。「絶好のロケーション」バッジが目印。' },
@@ -1167,6 +1314,21 @@
       stayPerNight: '/ 每人每晚', stayOfBudget: '（约总预算 30%）',
       searchGoogleHotels: '搜索 Google 酒店 →', searchAirbnb: '在 Airbnb 搜索 →', searchBooking: '在 Booking.com 搜索 →',
       stayFreeCancellation: '提供免费取消选项',
+      chatNav: '💬 聊天',
+      chatTitle: '💬 聊天',
+      chatNewRoom: '+ 新建房间',
+      chatGlobal: '🌍 全球',
+      chatDMs: '私信',
+      chatPlanRooms: '旅行计划',
+      chatRooms: '房间',
+      chatNoRooms: '还没有房间。',
+      chatSelectRoom: '选择一个房间开始聊天',
+      chatEmpty: '还没有消息。打个招呼吧！',
+      chatSend: '发送',
+      chatCreateRoom: '创建房间',
+      chatRoomNamePh: '房间名称...',
+      chatCreate: '创建',
+      chatDM: '私信',
     },
     hi: {
       tagline: 'AI आपकी परफेक्ट यात्रा बनाएगा',
@@ -1231,6 +1393,21 @@
       stayPerNight: '/ प्रति व्यक्ति प्रति रात', stayOfBudget: '(कुल बजट का ~30%)',
       searchGoogleHotels: 'Google Hotels पर खोजें →', searchAirbnb: 'Airbnb पर खोजें →', searchBooking: 'Booking.com पर खोजें →',
       stayFreeCancellation: 'मुफ़्त रद्दीकरण विकल्प उपलब्ध',
+      chatNav: '💬 चैट',
+      chatTitle: '💬 चैट',
+      chatNewRoom: '+ नया रूम',
+      chatGlobal: '🌍 ग्लोबल',
+      chatDMs: 'डायरेक्ट मैसेज',
+      chatPlanRooms: 'ट्रैवल प्लान',
+      chatRooms: 'रूम',
+      chatNoRooms: 'अभी कोई रूम नहीं।',
+      chatSelectRoom: 'चैट शुरू करने के लिए रूम चुनें',
+      chatEmpty: 'अभी कोई संदेश नहीं। हैलो कहें!',
+      chatSend: 'भेजें',
+      chatCreateRoom: 'रूम बनाएं',
+      chatRoomNamePh: 'रूम का नाम...',
+      chatCreate: 'बनाएं',
+      chatDM: 'डायरेक्ट मैसेज',
     },
     es: {
       tagline: 'La IA crea tu viaje perfecto',
@@ -1295,6 +1472,21 @@
       stayPerNight: '/ noche por persona', stayOfBudget: '(~30% del presupuesto total)',
       searchGoogleHotels: 'Buscar en Google Hotels →', searchAirbnb: 'Buscar en Airbnb →', searchBooking: 'Buscar en Booking.com →',
       stayFreeCancellation: 'Opciones de cancelación gratuita disponibles',
+      chatNav: '💬 Chat',
+      chatTitle: '💬 Chat',
+      chatNewRoom: '+ Nueva sala',
+      chatGlobal: '🌍 Global',
+      chatDMs: 'Mensajes directos',
+      chatPlanRooms: 'Planes de viaje',
+      chatRooms: 'Salas',
+      chatNoRooms: 'No hay salas aún.',
+      chatSelectRoom: 'Selecciona una sala para chatear',
+      chatEmpty: '¡Aún no hay mensajes. Di hola!',
+      chatSend: 'Enviar',
+      chatCreateRoom: 'Crear sala',
+      chatRoomNamePh: 'Nombre de la sala...',
+      chatCreate: 'Crear',
+      chatDM: 'Mensaje directo',
     },
     fr: {
       tagline: "L'IA crée votre voyage parfait",
@@ -1359,6 +1551,21 @@
       stayPerNight: '/ nuit par personne', stayOfBudget: '(~30% du budget total)',
       searchGoogleHotels: 'Rechercher sur Google Hotels →', searchAirbnb: 'Rechercher sur Airbnb →', searchBooking: 'Rechercher sur Booking.com →',
       stayFreeCancellation: 'Options d\'annulation gratuite disponibles',
+      chatNav: '💬 Chat',
+      chatTitle: '💬 Chat',
+      chatNewRoom: '+ Nouvelle salle',
+      chatGlobal: '🌍 Global',
+      chatDMs: 'Messages directs',
+      chatPlanRooms: 'Plans de voyage',
+      chatRooms: 'Salles',
+      chatNoRooms: 'Aucune salle pour le moment.',
+      chatSelectRoom: 'Sélectionnez une salle pour discuter',
+      chatEmpty: 'Pas encore de messages. Dites bonjour !',
+      chatSend: 'Envoyer',
+      chatCreateRoom: 'Créer une salle',
+      chatRoomNamePh: 'Nom de la salle...',
+      chatCreate: 'Créer',
+      chatDM: 'Message direct',
     },
     ar: {
       tagline: 'الذكاء الاصطناعي يصنع رحلتك المثالية',
@@ -1423,6 +1630,21 @@
       stayPerNight: '/ ليلة لكل شخص', stayOfBudget: '(~30% من الميزانية الإجمالية)',
       searchGoogleHotels: 'البحث في Google Hotels →', searchAirbnb: 'البحث في Airbnb →', searchBooking: 'البحث في Booking.com →',
       stayFreeCancellation: 'خيارات إلغاء مجانية متاحة',
+      chatNav: '💬 دردشة',
+      chatTitle: '💬 دردشة',
+      chatNewRoom: '+ غرفة جديدة',
+      chatGlobal: '🌍 عالمي',
+      chatDMs: 'الرسائل المباشرة',
+      chatPlanRooms: 'خطط السفر',
+      chatRooms: 'الغرف',
+      chatNoRooms: 'لا توجد غرف بعد.',
+      chatSelectRoom: 'اختر غرفة للبدء في الدردشة',
+      chatEmpty: 'لا توجد رسائل بعد. قل مرحباً!',
+      chatSend: 'إرسال',
+      chatCreateRoom: 'إنشاء غرفة',
+      chatRoomNamePh: 'اسم الغرفة...',
+      chatCreate: 'إنشاء',
+      chatDM: 'رسالة مباشرة',
     },
     bn: {
       tagline: 'AI আপনার নিখুঁত ভ্রমণ তৈরি করে',
@@ -1487,6 +1709,21 @@
       stayPerNight: '/ প্রতি রাত প্রতি ব্যক্তি', stayOfBudget: '(মোট বাজেটের ~৩০%)',
       searchGoogleHotels: 'Google Hotels-এ খুঁজুন →', searchAirbnb: 'Airbnb-তে খুঁজুন →', searchBooking: 'Booking.com-এ খুঁজুন →',
       stayFreeCancellation: 'বিনামূল্যে বাতিলের সুবিধা পাওয়া যায়',
+      chatNav: '💬 চ্যাট',
+      chatTitle: '💬 চ্যাট',
+      chatNewRoom: '+ নতুন রুম',
+      chatGlobal: '🌍 গ্লোবাল',
+      chatDMs: 'সরাসরি বার্তা',
+      chatPlanRooms: 'ভ্রমণ পরিকল্পনা',
+      chatRooms: 'রুম',
+      chatNoRooms: 'এখনো কোনো রুম নেই।',
+      chatSelectRoom: 'চ্যাট শুরু করতে একটি রুম বেছে নিন',
+      chatEmpty: 'এখনো কোনো বার্তা নেই। হ্যালো বলুন!',
+      chatSend: 'পাঠান',
+      chatCreateRoom: 'রুম তৈরি করুন',
+      chatRoomNamePh: 'রুমের নাম...',
+      chatCreate: 'তৈরি করুন',
+      chatDM: 'সরাসরি বার্তা',
     },
     ru: {
       tagline: 'ИИ создаёт ваше идеальное путешествие',
@@ -1551,6 +1788,21 @@
       stayPerNight: '/ ночь на человека', stayOfBudget: '(~30% от общего бюджета)',
       searchGoogleHotels: 'Искать в Google Hotels →', searchAirbnb: 'Искать на Airbnb →', searchBooking: 'Искать на Booking.com →',
       stayFreeCancellation: 'Доступны варианты с бесплатной отменой',
+      chatNav: '💬 Чат',
+      chatTitle: '💬 Чат',
+      chatNewRoom: '+ Новая комната',
+      chatGlobal: '🌍 Глобальный',
+      chatDMs: 'Личные сообщения',
+      chatPlanRooms: 'Путешествия',
+      chatRooms: 'Комнаты',
+      chatNoRooms: 'Пока нет комнат.',
+      chatSelectRoom: 'Выберите комнату для чата',
+      chatEmpty: 'Сообщений пока нет. Поздоровайтесь!',
+      chatSend: 'Отправить',
+      chatCreateRoom: 'Создать комнату',
+      chatRoomNamePh: 'Название комнаты...',
+      chatCreate: 'Создать',
+      chatDM: 'Личное сообщение',
     },
     pt: {
       tagline: 'A IA cria a sua viagem perfeita',
@@ -1615,6 +1867,21 @@
       stayPerNight: '/ noite por pessoa', stayOfBudget: '(~30% do orçamento total)',
       searchGoogleHotels: 'Pesquisar no Google Hotels →', searchAirbnb: 'Pesquisar no Airbnb →', searchBooking: 'Pesquisar no Booking.com →',
       stayFreeCancellation: 'Opções de cancelamento gratuito disponíveis',
+      chatNav: '💬 Chat',
+      chatTitle: '💬 Chat',
+      chatNewRoom: '+ Nova sala',
+      chatGlobal: '🌍 Global',
+      chatDMs: 'Mensagens diretas',
+      chatPlanRooms: 'Planos de viagem',
+      chatRooms: 'Salas',
+      chatNoRooms: 'Sem salas ainda.',
+      chatSelectRoom: 'Selecione uma sala para conversar',
+      chatEmpty: 'Ainda sem mensagens. Diga olá!',
+      chatSend: 'Enviar',
+      chatCreateRoom: 'Criar sala',
+      chatRoomNamePh: 'Nome da sala...',
+      chatCreate: 'Criar',
+      chatDM: 'Mensagem direta',
     },
     ur: {
       tagline: 'AI آپ کا بہترین سفر بناتا ہے',
@@ -1679,6 +1946,21 @@
       stayPerNight: '/ فی رات فی شخص', stayOfBudget: '(کل بجٹ کا ~۳۰%)',
       searchGoogleHotels: 'Google Hotels پر تلاش کریں →', searchAirbnb: 'Airbnb پر تلاش کریں →', searchBooking: 'Booking.com پر تلاش کریں →',
       stayFreeCancellation: 'مفت منسوخی کے اختیارات دستیاب ہیں',
+      chatNav: '💬 چیٹ',
+      chatTitle: '💬 چیٹ',
+      chatNewRoom: '+ نیا کمرہ',
+      chatGlobal: '🌍 عالمی',
+      chatDMs: 'ڈائریکٹ میسیج',
+      chatPlanRooms: 'سفری پلان',
+      chatRooms: 'کمرے',
+      chatNoRooms: 'ابھی کوئی کمرہ نہیں۔',
+      chatSelectRoom: 'چیٹ شروع کرنے کے لیے کمرہ منتخب کریں',
+      chatEmpty: 'ابھی کوئی پیغام نہیں۔ ہیلو کہیں!',
+      chatSend: 'بھیجیں',
+      chatCreateRoom: 'کمرہ بنائیں',
+      chatRoomNamePh: 'کمرے کا نام...',
+      chatCreate: 'بنائیں',
+      chatDM: 'ڈائریکٹ میسیج',
     },
     id: {
       tagline: 'AI merancang perjalanan sempurna Anda',
@@ -1743,6 +2025,21 @@
       stayPerNight: '/ malam per orang', stayOfBudget: '(~30% dari total anggaran)',
       searchGoogleHotels: 'Cari di Google Hotels →', searchAirbnb: 'Cari di Airbnb →', searchBooking: 'Cari di Booking.com →',
       stayFreeCancellation: 'Tersedia opsi pembatalan gratis',
+      chatNav: '💬 Chat',
+      chatTitle: '💬 Chat',
+      chatNewRoom: '+ Ruang Baru',
+      chatGlobal: '🌍 Global',
+      chatDMs: 'Pesan Langsung',
+      chatPlanRooms: 'Rencana Perjalanan',
+      chatRooms: 'Ruang',
+      chatNoRooms: 'Belum ada ruang.',
+      chatSelectRoom: 'Pilih ruang untuk mulai mengobrol',
+      chatEmpty: 'Belum ada pesan. Ucapkan halo!',
+      chatSend: 'Kirim',
+      chatCreateRoom: 'Buat Ruang',
+      chatRoomNamePh: 'Nama ruang...',
+      chatCreate: 'Buat',
+      chatDM: 'Pesan Langsung',
     },
     de: {
       tagline: 'KI gestaltet Ihre perfekte Reise',
@@ -1807,6 +2104,21 @@
       stayPerNight: '/ Nacht pro Person', stayOfBudget: '(~30% des Gesamtbudgets)',
       searchGoogleHotels: 'Bei Google Hotels suchen →', searchAirbnb: 'Bei Airbnb suchen →', searchBooking: 'Bei Booking.com suchen →',
       stayFreeCancellation: 'Kostenlose Stornierungsoptionen verfügbar',
+      chatNav: '💬 Chat',
+      chatTitle: '💬 Chat',
+      chatNewRoom: '+ Neuer Raum',
+      chatGlobal: '🌍 Global',
+      chatDMs: 'Direktnachrichten',
+      chatPlanRooms: 'Reisepläne',
+      chatRooms: 'Räume',
+      chatNoRooms: 'Noch keine Räume.',
+      chatSelectRoom: 'Raum auswählen um zu chatten',
+      chatEmpty: 'Noch keine Nachrichten. Sag Hallo!',
+      chatSend: 'Senden',
+      chatCreateRoom: 'Raum erstellen',
+      chatRoomNamePh: 'Raumname...',
+      chatCreate: 'Erstellen',
+      chatDM: 'Direktnachricht',
     },
     sw: {
       tagline: 'AI inabuni safari yako kamili',
@@ -1871,6 +2183,21 @@
       stayPerNight: '/ usiku kwa mtu', stayOfBudget: '(~30% ya bajeti yote)',
       searchGoogleHotels: 'Tafuta kwenye Google Hotels →', searchAirbnb: 'Tafuta kwenye Airbnb →', searchBooking: 'Tafuta kwenye Booking.com →',
       stayFreeCancellation: 'Chaguzi za kufuta bila malipo zinapatikana',
+      chatNav: '💬 Mazungumzo',
+      chatTitle: '💬 Mazungumzo',
+      chatNewRoom: '+ Chumba Kipya',
+      chatGlobal: '🌍 Ulimwenguni',
+      chatDMs: 'Ujumbe wa Moja kwa Moja',
+      chatPlanRooms: 'Mipango ya Safari',
+      chatRooms: 'Vyumba',
+      chatNoRooms: 'Bado hakuna vyumba.',
+      chatSelectRoom: 'Chagua chumba kuanza mazungumzo',
+      chatEmpty: 'Bado hakuna ujumbe. Sema habari!',
+      chatSend: 'Tuma',
+      chatCreateRoom: 'Unda Chumba',
+      chatRoomNamePh: 'Jina la chumba...',
+      chatCreate: 'Unda',
+      chatDM: 'Ujumbe wa Kibinafsi',
     },
     mr: {
       tagline: 'AI तुमचा परिपूर्ण प्रवास घडवतो',
@@ -1935,6 +2262,21 @@
       stayPerNight: '/ प्रती रात्र प्रती व्यक्ती', stayOfBudget: '(एकूण बजेटच्या ~३०%)',
       searchGoogleHotels: 'Google Hotels वर शोधा →', searchAirbnb: 'Airbnb वर शोधा →', searchBooking: 'Booking.com वर शोधा →',
       stayFreeCancellation: 'मोफत रद्दीकरणाचे पर्याय उपलब्ध',
+      chatNav: '💬 चॅट',
+      chatTitle: '💬 चॅट',
+      chatNewRoom: '+ नवीन रूम',
+      chatGlobal: '🌍 ग्लोबल',
+      chatDMs: 'थेट संदेश',
+      chatPlanRooms: 'प्रवास योजना',
+      chatRooms: 'रूम',
+      chatNoRooms: 'अजून कोणतेही रूम नाही.',
+      chatSelectRoom: 'चॅट सुरू करण्यासाठी रूम निवडा',
+      chatEmpty: 'अजून कोणताही संदेश नाही. नमस्कार म्हणा!',
+      chatSend: 'पाठवा',
+      chatCreateRoom: 'रूम तयार करा',
+      chatRoomNamePh: 'रूमचे नाव...',
+      chatCreate: 'तयार करा',
+      chatDM: 'थेट संदेश',
     },
     te: {
       tagline: 'AI మీ పర్ఫెక్ట్ ట్రిప్‌ని రూపొందిస్తుంది',
@@ -1999,6 +2341,21 @@
       stayPerNight: '/ రాత్రి వ్యక్తికి', stayOfBudget: '(మొత్తం బడ్జెట్‌లో ~30%)',
       searchGoogleHotels: 'Google Hotels లో వెతకండి →', searchAirbnb: 'Airbnb లో వెతకండి →', searchBooking: 'Booking.com లో వెతకండి →',
       stayFreeCancellation: 'ఉచిత రద్దు ఎంపికలు అందుబాటులో ఉన్నాయి',
+      chatNav: '💬 చాట్',
+      chatTitle: '💬 చాట్',
+      chatNewRoom: '+ కొత్త గది',
+      chatGlobal: '🌍 గ్లోబల్',
+      chatDMs: 'డైరెక్ట్ మెసేజ్‌లు',
+      chatPlanRooms: 'ట్రావెల్ ప్లాన్‌లు',
+      chatRooms: 'గదులు',
+      chatNoRooms: 'ఇంకా గదులు లేవు.',
+      chatSelectRoom: 'చాట్ ప్రారంభించడానికి గది ఎంచుకోండి',
+      chatEmpty: 'ఇంకా మెసేజ్‌లు లేవు. హలో చెప్పండి!',
+      chatSend: 'పంపు',
+      chatCreateRoom: 'గది సృష్టించు',
+      chatRoomNamePh: 'గది పేరు...',
+      chatCreate: 'సృష్టించు',
+      chatDM: 'డైరెక్ట్ మెసేజ్',
     },
     tr: {
       tagline: 'Yapay zeka mükemmel seyahatinizi oluşturuyor',
@@ -2063,6 +2420,21 @@
       stayPerNight: '/ kişi başı gece', stayOfBudget: '(toplam bütçenin ~%30\'u)',
       searchGoogleHotels: 'Google Hotels\'te Ara →', searchAirbnb: 'Airbnb\'de Ara →', searchBooking: 'Booking.com\'da Ara →',
       stayFreeCancellation: 'Ücretsiz iptal seçenekleri mevcut',
+      chatNav: '💬 Sohbet',
+      chatTitle: '💬 Sohbet',
+      chatNewRoom: '+ Yeni Oda',
+      chatGlobal: '🌍 Global',
+      chatDMs: 'Doğrudan Mesajlar',
+      chatPlanRooms: 'Seyahat Planları',
+      chatRooms: 'Odalar',
+      chatNoRooms: 'Henüz oda yok.',
+      chatSelectRoom: 'Sohbet etmek için bir oda seçin',
+      chatEmpty: 'Henüz mesaj yok. Merhaba deyin!',
+      chatSend: 'Gönder',
+      chatCreateRoom: 'Oda Oluştur',
+      chatRoomNamePh: 'Oda adı...',
+      chatCreate: 'Oluştur',
+      chatDM: 'Doğrudan Mesaj',
     },
     ta: {
       tagline: 'AI உங்கள் சரியான பயணத்தை உருவாக்குகிறது',
@@ -2127,6 +2499,21 @@
       stayPerNight: '/ இரவு ஒரு நபருக்கு', stayOfBudget: '(மொத்த பட்ஜெட்டில் ~30%)',
       searchGoogleHotels: 'Google Hotels இல் தேடு →', searchAirbnb: 'Airbnb இல் தேடு →', searchBooking: 'Booking.com இல் தேடு →',
       stayFreeCancellation: 'இலவச ரத்து விருப்பங்கள் கிடைக்கின்றன',
+      chatNav: '💬 அரட்டை',
+      chatTitle: '💬 அரட்டை',
+      chatNewRoom: '+ புதிய அறை',
+      chatGlobal: '🌍 உலகளாவிய',
+      chatDMs: 'நேரடி செய்திகள்',
+      chatPlanRooms: 'பயண திட்டங்கள்',
+      chatRooms: 'அறைகள்',
+      chatNoRooms: 'இன்னும் அறைகள் இல்லை.',
+      chatSelectRoom: 'அரட்டையடிக்க ஒரு அறையை தேர்ந்தெடுக்கவும்',
+      chatEmpty: 'இன்னும் செய்திகள் இல்லை. வணக்கம் சொல்லுங்கள்!',
+      chatSend: 'அனுப்பு',
+      chatCreateRoom: 'அறை உருவாக்கு',
+      chatRoomNamePh: 'அறையின் பெயர்...',
+      chatCreate: 'உருவாக்கு',
+      chatDM: 'நேரடி செய்தி',
     },
     ko: {
       tagline: 'AI가 완벽한 여행을 설계합니다',
@@ -2191,6 +2578,21 @@
       stayPerNight: '/ 1인 1박', stayOfBudget: '(총 예산의 ~30%)',
       searchGoogleHotels: 'Google Hotels에서 검색 →', searchAirbnb: 'Airbnb에서 검색 →', searchBooking: 'Booking.com에서 검색 →',
       stayFreeCancellation: '무료 취소 옵션 이용 가능',
+      chatNav: '💬 채팅',
+      chatTitle: '💬 채팅',
+      chatNewRoom: '+ 새 방',
+      chatGlobal: '🌍 글로벌',
+      chatDMs: '다이렉트 메시지',
+      chatPlanRooms: '여행 계획',
+      chatRooms: '채팅방',
+      chatNoRooms: '아직 방이 없습니다.',
+      chatSelectRoom: '채팅할 방을 선택하세요',
+      chatEmpty: '아직 메시지가 없습니다. 인사해 보세요!',
+      chatSend: '전송',
+      chatCreateRoom: '방 만들기',
+      chatRoomNamePh: '방 이름...',
+      chatCreate: '만들기',
+      chatDM: '다이렉트 메시지',
     },
     vi: {
       tagline: 'AI tạo ra chuyến đi hoàn hảo của bạn',
@@ -2255,6 +2657,21 @@
       stayPerNight: '/ đêm mỗi người', stayOfBudget: '(~30% tổng ngân sách)',
       searchGoogleHotels: 'Tìm trên Google Hotels →', searchAirbnb: 'Tìm trên Airbnb →', searchBooking: 'Tìm trên Booking.com →',
       stayFreeCancellation: 'Có tùy chọn hủy miễn phí',
+      chatNav: '💬 Trò chuyện',
+      chatTitle: '💬 Trò chuyện',
+      chatNewRoom: '+ Phòng mới',
+      chatGlobal: '🌍 Toàn cầu',
+      chatDMs: 'Tin nhắn trực tiếp',
+      chatPlanRooms: 'Kế hoạch du lịch',
+      chatRooms: 'Phòng',
+      chatNoRooms: 'Chưa có phòng nào.',
+      chatSelectRoom: 'Chọn phòng để bắt đầu trò chuyện',
+      chatEmpty: 'Chưa có tin nhắn. Hãy nói xin chào!',
+      chatSend: 'Gửi',
+      chatCreateRoom: 'Tạo phòng',
+      chatRoomNamePh: 'Tên phòng...',
+      chatCreate: 'Tạo',
+      chatDM: 'Tin nhắn trực tiếp',
     },
     tl: {
       tagline: 'Ginagawa ng AI ang iyong perpektong biyahe',
@@ -2319,6 +2736,21 @@
       stayPerNight: '/ gabi bawat tao', stayOfBudget: '(~30% ng kabuuang badyet)',
       searchGoogleHotels: 'Maghanap sa Google Hotels →', searchAirbnb: 'Maghanap sa Airbnb →', searchBooking: 'Maghanap sa Booking.com →',
       stayFreeCancellation: 'Available ang mga opsyon sa libreng pagkansela',
+      chatNav: '💬 Chat',
+      chatTitle: '💬 Chat',
+      chatNewRoom: '+ Bagong Silid',
+      chatGlobal: '🌍 Pandaigdig',
+      chatDMs: 'Mga Direktang Mensahe',
+      chatPlanRooms: 'Mga Plano sa Biyahe',
+      chatRooms: 'Mga Silid',
+      chatNoRooms: 'Wala pang mga silid.',
+      chatSelectRoom: 'Pumili ng silid para magsimulang mag-chat',
+      chatEmpty: 'Wala pang mga mensahe. Magpakilala!',
+      chatSend: 'Ipadala',
+      chatCreateRoom: 'Gumawa ng Silid',
+      chatRoomNamePh: 'Pangalan ng silid...',
+      chatCreate: 'Gumawa',
+      chatDM: 'Direktang Mensahe',
     },
   };
 
@@ -3137,6 +3569,7 @@
     document.getElementById('userprofile').classList.remove('active');
     document.getElementById('timeline').classList.remove('active');
     document.getElementById('mypage').classList.remove('active');
+    document.getElementById('chat').classList.remove('active');
     _getMainEls().forEach(el => { el.style.display = el._prevDisplay ?? ''; });
     if (rawPlanText) document.getElementById('visuals').style.display = '';
     _upFromPage = null;
@@ -3163,6 +3596,9 @@
       case '/mypage':
         if (currentUser) showMyPage();
         else { showHome(); openLoginModal(); }
+        break;
+      case '/chat':
+        showChat();
         break;
       default:
         showHome();
@@ -4309,6 +4745,243 @@
   // Call initSupabase when page loads
   initSupabase();
   applyI18n();
+
+  // ===== CHAT =====
+  let _chatChannel = null;
+  let _currentRoomId = null;
+  let _chatRooms = [];
+
+  async function showChat() {
+    if (!currentUser) { openLoginModal(); return; }
+    _getMainEls().forEach(el => el.style.display = 'none');
+    document.getElementById('timeline').classList.remove('active');
+    document.getElementById('mypage').classList.remove('active');
+    document.getElementById('userprofile').classList.remove('active');
+    document.getElementById('chat').classList.add('active');
+    pushRoute('/chat');
+    await loadChatRooms();
+  }
+
+  function hideChat() {
+    document.getElementById('chat').classList.remove('active');
+    _getMainEls().forEach(el => el.style.display = '');
+    unsubscribeChat();
+    _currentRoomId = null;
+    pushRoute('/');
+  }
+
+  function unsubscribeChat() {
+    if (_chatChannel) { _chatChannel.unsubscribe(); _chatChannel = null; }
+  }
+
+  async function loadChatRooms() {
+    if (!supabaseClient) return;
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) return;
+    const rooms = await fetch('/api/chat/rooms', {
+      headers: { 'Authorization': `Bearer ${session.access_token}` }
+    }).then(r => r.json()).catch(() => []);
+    _chatRooms = Array.isArray(rooms) ? rooms : [];
+    renderChatRoomList();
+  }
+
+  function renderChatRoomList() {
+    const list = document.getElementById('chatRoomList');
+    if (!list) return;
+
+    const global = _chatRooms.filter(r => r.type === 'global');
+    const dms = _chatRooms.filter(r => r.type === 'dm');
+    const plans = _chatRooms.filter(r => r.type === 'plan');
+    const custom = _chatRooms.filter(r => r.type === 'custom');
+
+    let html = '';
+
+    const roomItem = (r) => {
+      const icon = r.type === 'global' ? '🌍' : r.type === 'dm' ? '👤' : r.type === 'plan' ? '✈️' : r.is_private ? '🔒' : '💬';
+      const name = r.display_name || r.name || (r.type === 'global' ? t('chatGlobal') : r.type === 'dm' ? t('chatDM') : 'Room');
+      const active = _currentRoomId === r.id ? ' active' : '';
+      return `<div class="chat-room-item${active}" onclick="openRoom('${r.id}','${escHtml(name)}')">
+        <span class="room-icon">${icon}</span>
+        <div class="room-info">
+          <div class="room-name">${escHtml(name)}</div>
+        </div>
+      </div>`;
+    };
+
+    if (global.length) {
+      html += `<div class="chat-section-label">${t('chatGlobal')}</div>`;
+      html += global.map(roomItem).join('');
+    }
+    if (dms.length) {
+      html += `<div class="chat-section-label">${t('chatDMs')}</div>`;
+      html += dms.map(roomItem).join('');
+    }
+    if (plans.length) {
+      html += `<div class="chat-section-label">${t('chatPlanRooms')}</div>`;
+      html += plans.map(roomItem).join('');
+    }
+    if (custom.length) {
+      html += `<div class="chat-section-label">${t('chatRooms')}</div>`;
+      html += custom.map(roomItem).join('');
+    }
+    if (!_chatRooms.length) {
+      html = `<div class="chat-empty">${t('chatNoRooms')}</div>`;
+    }
+    list.innerHTML = html;
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  async function openRoom(roomId, roomName) {
+    _currentRoomId = roomId;
+    // Update sidebar active state
+    document.querySelectorAll('.chat-room-item').forEach(el => el.classList.remove('active'));
+    const items = document.querySelectorAll('.chat-room-item');
+    items.forEach(el => { if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(roomId)) el.classList.add('active'); });
+
+    // Show chat window
+    document.getElementById('chatNoRoom').style.display = 'none';
+    const win = document.getElementById('chatWindow');
+    win.style.display = 'flex';
+    win.style.flexDirection = 'column';
+    win.style.flex = '1';
+    win.style.height = '100%';
+    document.getElementById('chatRoomTitle').textContent = roomName;
+
+    // Load history
+    document.getElementById('chatMessages').innerHTML = `<div class="chat-empty">${t('loadingText')}</div>`;
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const msgs = await fetch(`/api/chat/rooms/${roomId}/messages`, {
+      headers: { 'Authorization': `Bearer ${session.access_token}` }
+    }).then(r => r.json()).catch(() => []);
+    renderMessages(Array.isArray(msgs) ? msgs : []);
+
+    // Subscribe to realtime
+    unsubscribeChat();
+    _chatChannel = supabaseClient
+      .channel(`room:${roomId}`)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'messages',
+        filter: `room_id=eq.${roomId}`
+      }, (payload) => {
+        appendMessage(payload.new);
+        scrollChatBottom(true);
+      })
+      .subscribe();
+  }
+
+  function renderMessages(msgs) {
+    const container = document.getElementById('chatMessages');
+    if (!msgs.length) {
+      container.innerHTML = `<div class="chat-empty">${t('chatEmpty')}</div>`;
+      return;
+    }
+    container.innerHTML = msgs.map(m => buildMessageHTML(m)).join('');
+    scrollChatBottom(false);
+  }
+
+  function appendMessage(msg) {
+    const container = document.getElementById('chatMessages');
+    const empty = container.querySelector('.chat-empty');
+    if (empty) empty.remove();
+    container.insertAdjacentHTML('beforeend', buildMessageHTML(msg));
+  }
+
+  function buildMessageHTML(msg) {
+    const isOwn = currentUser && msg.user_id === currentUser.id;
+    const ownClass = isOwn ? ' own' : '';
+    const avatar = msg.user_avatar
+      ? `<div class="chat-avatar"><img src="${escHtml(msg.user_avatar)}" alt=""></div>`
+      : `<div class="chat-avatar">${escHtml((msg.user_name||'?')[0].toUpperCase())}</div>`;
+    const time = new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    const name = isOwn ? '' : `<div class="chat-meta">${escHtml(msg.user_name)} · ${time}</div>`;
+    const ownMeta = isOwn ? `<div class="chat-meta" style="text-align:right">${time}</div>` : '';
+    return `<div class="chat-message${ownClass}">
+      ${avatar}
+      <div class="chat-bubble-wrap">
+        ${name}${ownMeta}
+        <div class="chat-bubble">${escHtml(msg.content)}</div>
+      </div>
+    </div>`;
+  }
+
+  function scrollChatBottom(onlyIfNear) {
+    const el = document.getElementById('chatMessages');
+    if (!el) return;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+    if (!onlyIfNear || nearBottom) el.scrollTop = el.scrollHeight;
+  }
+
+  async function sendChatMessage() {
+    if (!_currentRoomId) return;
+    const input = document.getElementById('chatInput');
+    const content = input.value.trim();
+    if (!content) return;
+    const btn = document.getElementById('chatSendBtn');
+    btn.disabled = true;
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const resp = await fetch(`/api/chat/rooms/${_currentRoomId}/messages`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content })
+    }).catch(() => null);
+    btn.disabled = false;
+    if (resp && resp.ok) {
+      input.value = '';
+      input.style.height = 'auto';
+    }
+  }
+
+  // Enter to send (Shift+Enter = newline)
+  document.addEventListener('DOMContentLoaded', () => {
+    const inp = document.getElementById('chatInput');
+    if (inp) {
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+      });
+      inp.addEventListener('input', () => {
+        inp.style.height = 'auto';
+        inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
+      });
+    }
+  });
+
+  // Create Room Modal
+  function openCreateRoomModal() { document.getElementById('createRoomModal').classList.add('open'); }
+  function closeCreateRoomModal() { document.getElementById('createRoomModal').classList.remove('open'); }
+  async function submitCreateRoom() {
+    const name = document.getElementById('newRoomName').value.trim();
+    if (!name) return;
+    const privacy = document.querySelector('input[name="roomPrivacy"]:checked')?.value;
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const resp = await fetch('/api/chat/rooms', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, is_private: privacy === 'private' })
+    }).then(r => r.json()).catch(() => null);
+    if (resp && resp.id) {
+      closeCreateRoomModal();
+      document.getElementById('newRoomName').value = '';
+      await loadChatRooms();
+      openRoom(resp.id, resp.name);
+    }
+  }
+
+  // Start DM with a friend
+  async function startDM(otherUserId) {
+    if (!currentUser) { openLoginModal(); return; }
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const resp = await fetch(`/api/chat/dm/${otherUserId}`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${session.access_token}` }
+    }).then(r => r.json()).catch(() => null);
+    if (resp && resp.id) {
+      await showChat();
+      openRoom(resp.id, resp.display_name || t('chatDM'));
+    }
+  }
 </script>
 
 </body>

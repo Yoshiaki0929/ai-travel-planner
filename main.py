@@ -736,6 +736,339 @@ async def health():
     return {"status": "ok"}
 
 
+# ===== CHAT =====
+
+_global_room_id: str = ""
+
+
+class CreateRoomRequest(BaseModel):
+    name: str
+    is_private: bool = False
+
+
+class SendMessageRequest(BaseModel):
+    content: str
+
+
+async def _ensure_global_room():
+    global _global_room_id
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    if not supabase_url or not supabase_key:
+        return
+    system_user = "00000000-0000-0000-0000-000000000000"
+    async with httpx.AsyncClient() as client:
+        # Try insert, ignore conflict
+        await client.post(
+            f"{supabase_url}/rest/v1/chat_rooms",
+            headers={
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=ignore-duplicates",
+            },
+            json={"type": "global", "name": "Global", "is_private": False, "created_by": system_user},
+        )
+        # Now fetch it
+        resp = await client.get(
+            f"{supabase_url}/rest/v1/chat_rooms?type=eq.global&limit=1",
+            headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"},
+        )
+    rows = resp.json() if resp.status_code == 200 else []
+    if rows:
+        _global_room_id = rows[0]["id"]
+
+
+async def _get_room_access(room_id: str, user_id: str, supabase_url: str, supabase_key: str) -> bool:
+    """Returns True if user_id has access to room_id."""
+    async with httpx.AsyncClient() as client:
+        room_resp = await client.get(
+            f"{supabase_url}/rest/v1/chat_rooms?id=eq.{room_id}&limit=1",
+            headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"},
+        )
+    rooms = room_resp.json() if room_resp.status_code == 200 else []
+    if not rooms:
+        return False
+    room = rooms[0]
+    if room.get("type") == "global":
+        return True
+    if room.get("type") == "custom" and not room.get("is_private"):
+        return True
+    # Check membership
+    async with httpx.AsyncClient() as client:
+        mem_resp = await client.get(
+            f"{supabase_url}/rest/v1/room_members?room_id=eq.{room_id}&user_id=eq.{user_id}&limit=1",
+            headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"},
+        )
+    members = mem_resp.json() if mem_resp.status_code == 200 else []
+    return len(members) > 0
+
+
+@app.on_event("startup")
+async def startup_event():
+    await _ensure_global_room()
+
+
+@app.get("/api/chat/global")
+async def get_global_room():
+    """Return the global room id (no auth required)."""
+    return {"id": _global_room_id}
+
+
+@app.get("/api/chat/rooms")
+async def get_chat_rooms(authorization: str = Header(None)):
+    """Return all rooms the user has access to."""
+    user = await get_current_user(authorization)
+    if not user:
+        return JSONResponse(status_code=401, content={"error": "Not authenticated"})
+
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    user_id = user["id"]
+
+    rooms_map = {}
+
+    # Global room
+    if _global_room_id:
+        rooms_map[_global_room_id] = {
+            "id": _global_room_id, "type": "global", "name": "Global",
+            "is_private": False, "plan_id": None, "created_by": None,
+        }
+
+    async with httpx.AsyncClient() as client:
+        # Rooms user is a member of
+        mem_resp = await client.get(
+            f"{supabase_url}/rest/v1/room_members?user_id=eq.{user_id}&select=room_id,chat_rooms(*)",
+            headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"},
+        )
+        if mem_resp.status_code == 200:
+            for row in mem_resp.json():
+                room = row.get("chat_rooms")
+                if room and room.get("id"):
+                    rooms_map[room["id"]] = room
+
+        # Public custom rooms
+        pub_resp = await client.get(
+            f"{supabase_url}/rest/v1/chat_rooms?type=eq.custom&is_private=eq.false",
+            headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"},
+        )
+        if pub_resp.status_code == 200:
+            for room in pub_resp.json():
+                if room.get("id"):
+                    rooms_map[room["id"]] = room
+
+    return list(rooms_map.values())
+
+
+@app.post("/api/chat/rooms")
+async def create_chat_room(body: CreateRoomRequest, authorization: str = Header(None)):
+    """Create a custom chat room."""
+    user = await get_current_user(authorization)
+    if not user:
+        return JSONResponse(status_code=401, content={"error": "Not authenticated"})
+
+    name = body.name.strip()[:50]
+    if not name:
+        return JSONResponse(status_code=400, content={"error": "Room name is required"})
+
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    user_id = user["id"]
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{supabase_url}/rest/v1/chat_rooms",
+            headers={
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}",
+                "Content-Type": "application/json",
+                "Prefer": "return=representation",
+            },
+            json={"type": "custom", "name": name, "is_private": body.is_private, "created_by": user_id},
+        )
+    if resp.status_code not in (200, 201):
+        return JSONResponse(status_code=500, content={"error": "Failed to create room"})
+    new_room = resp.json()[0] if resp.json() else {}
+    room_id = new_room.get("id")
+    if room_id:
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"{supabase_url}/rest/v1/room_members",
+                headers={
+                    "apikey": supabase_key,
+                    "Authorization": f"Bearer {supabase_key}",
+                    "Content-Type": "application/json",
+                    "Prefer": "resolution=ignore-duplicates",
+                },
+                json={"room_id": room_id, "user_id": user_id},
+            )
+    return new_room
+
+
+@app.post("/api/chat/dm/{other_user_id}")
+async def get_or_create_dm(other_user_id: str, authorization: str = Header(None)):
+    """Get or create a DM room between the caller and another user."""
+    user = await get_current_user(authorization)
+    if not user:
+        return JSONResponse(status_code=401, content={"error": "Not authenticated"})
+    if not _UUID_RE.match(other_user_id):
+        return JSONResponse(status_code=400, content={"error": "Invalid user id"})
+
+    user_id = user["id"]
+    if user_id == other_user_id:
+        return JSONResponse(status_code=400, content={"error": "Cannot DM yourself"})
+
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+
+    # Validate friendship
+    async with httpx.AsyncClient() as client:
+        fr_resp = await client.get(
+            f"{supabase_url}/rest/v1/friendships"
+            f"?or=(and(requester_id.eq.{user_id},addressee_id.eq.{other_user_id})"
+            f",and(requester_id.eq.{other_user_id},addressee_id.eq.{user_id}))"
+            f"&status=eq.accepted&limit=1",
+            headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"},
+        )
+    friendships = fr_resp.json() if fr_resp.status_code == 200 else []
+    if not friendships:
+        return JSONResponse(status_code=403, content={"error": "Not friends with this user"})
+
+    dm_key = "_".join(sorted([user_id, other_user_id]))
+
+    async with httpx.AsyncClient() as client:
+        existing = await client.get(
+            f"{supabase_url}/rest/v1/chat_rooms?dm_key=eq.{dm_key}&type=eq.dm&limit=1",
+            headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"},
+        )
+    rooms = existing.json() if existing.status_code == 200 else []
+    if rooms:
+        return rooms[0]
+
+    # Create new DM room
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{supabase_url}/rest/v1/chat_rooms",
+            headers={
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}",
+                "Content-Type": "application/json",
+                "Prefer": "return=representation",
+            },
+            json={"type": "dm", "name": dm_key, "is_private": True, "created_by": user_id, "dm_key": dm_key},
+        )
+    if resp.status_code not in (200, 201):
+        return JSONResponse(status_code=500, content={"error": "Failed to create DM room"})
+    new_room = resp.json()[0] if resp.json() else {}
+    room_id = new_room.get("id")
+    if room_id:
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"{supabase_url}/rest/v1/room_members",
+                headers={
+                    "apikey": supabase_key,
+                    "Authorization": f"Bearer {supabase_key}",
+                    "Content-Type": "application/json",
+                    "Prefer": "resolution=ignore-duplicates",
+                },
+                json=[
+                    {"room_id": room_id, "user_id": user_id},
+                    {"room_id": room_id, "user_id": other_user_id},
+                ],
+            )
+    return new_room
+
+
+@app.get("/api/chat/rooms/{room_id}/messages")
+async def get_messages(room_id: str, authorization: str = Header(None)):
+    """Return messages for a room."""
+    user = await get_current_user(authorization)
+    if not user:
+        return JSONResponse(status_code=401, content={"error": "Not authenticated"})
+    if not _UUID_RE.match(room_id):
+        return JSONResponse(status_code=400, content={"error": "Invalid room_id"})
+
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+
+    has_access = await _get_room_access(room_id, user["id"], supabase_url, supabase_key)
+    if not has_access:
+        return JSONResponse(status_code=403, content={"error": "Access denied"})
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{supabase_url}/rest/v1/messages?room_id=eq.{room_id}&order=created_at.asc&limit=100",
+            headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"},
+        )
+    return resp.json() if resp.status_code == 200 else []
+
+
+@app.post("/api/chat/rooms/{room_id}/messages")
+async def send_message(room_id: str, body: SendMessageRequest, authorization: str = Header(None)):
+    """Send a message to a room."""
+    user = await get_current_user(authorization)
+    if not user:
+        return JSONResponse(status_code=401, content={"error": "Not authenticated"})
+    if not _UUID_RE.match(room_id):
+        return JSONResponse(status_code=400, content={"error": "Invalid room_id"})
+
+    content = body.content.strip()[:1000]
+    if not content:
+        return JSONResponse(status_code=400, content={"error": "Message content is required"})
+
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+
+    has_access = await _get_room_access(room_id, user["id"], supabase_url, supabase_key)
+    if not has_access:
+        return JSONResponse(status_code=403, content={"error": "Access denied"})
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{supabase_url}/rest/v1/messages",
+            headers={
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}",
+                "Content-Type": "application/json",
+                "Prefer": "return=representation",
+            },
+            json={
+                "room_id": room_id,
+                "user_id": user["id"],
+                "user_name": user.get("name") or user.get("email", ""),
+                "user_avatar": user.get("avatar") or "",
+                "content": content,
+            },
+        )
+    if resp.status_code not in (200, 201):
+        return JSONResponse(status_code=500, content={"error": "Failed to send message"})
+    return {"ok": True, "message": resp.json()[0] if resp.json() else {}}
+
+
+@app.get("/api/chat/rooms/{room_id}/members")
+async def get_room_members(room_id: str, authorization: str = Header(None)):
+    """Return members of a room."""
+    user = await get_current_user(authorization)
+    if not user:
+        return JSONResponse(status_code=401, content={"error": "Not authenticated"})
+    if not _UUID_RE.match(room_id):
+        return JSONResponse(status_code=400, content={"error": "Invalid room_id"})
+
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+
+    has_access = await _get_room_access(room_id, user["id"], supabase_url, supabase_key)
+    if not has_access:
+        return JSONResponse(status_code=403, content={"error": "Access denied"})
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{supabase_url}/rest/v1/room_members?room_id=eq.{room_id}&select=user_id,user_name,user_avatar,joined_at",
+            headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"},
+        )
+    return resp.json() if resp.status_code == 200 else []
+
+
 if os.environ.get("DEBUG_ENDPOINTS") == "true":
     @app.get("/debug")
     async def debug():
