@@ -1,13 +1,14 @@
 import os
 import json
 import re
+import time
 from openai import OpenAI
 
 client = OpenAI(
-    api_key=os.environ.get("GEMINI_API_KEY", ""),
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+    api_key=os.environ.get("GROQ_API_KEY", ""),
+    base_url="https://api.groq.com/openai/v1",
 )
-MODEL = "gemini-2.5-flash"
+MODEL = "llama-3.3-70b-versatile"
 
 
 def research_destination(destination: str, travel_dates: str) -> str:
@@ -122,7 +123,7 @@ def calculate_budget(destination: str, duration_days: int, total_budget_jpy: int
         num_people: Number of travelers (default 1)
     """
     total_budget_jpy = int(total_budget_jpy)
-    duration_days = int(duration_days)
+    duration_days = max(int(duration_days), 1)
     num_people = int(num_people)
     per_person_budget = total_budget_jpy // num_people
 
@@ -324,17 +325,23 @@ def find_experiences(destination: str, interests: str, budget_per_day_jpy: int) 
 def _extract_travel_params(user_request: str) -> dict:
     """Extract travel parameters from a user request (simple parser supporting English and Japanese)."""
 
-    # Destination detection — English and Japanese city names
-    dest_patterns = [
-        r'(Bali|Paris|New York|London|Sydney|Tokyo|Kyoto|Osaka|Bangkok|Ho Chi Minh|Seoul|Taipei|Hawaii|Singapore|Rome|Barcelona|Amsterdam|Dubai|Cancun|Lisbon)',
-        r'(バリ島|パリ|ニューヨーク|ロンドン|シドニー|東京|京都|大阪|タイ|バンコク|ベトナム|ホーチミン|ソウル|台湾|台北|ハワイ|シンガポール|ローマ|バルセロナ)',
-    ]
+    # Destination detection — read the structured 【旅行先】 tag FIRST (always present and exact)
     destination = "destination"
-    for pat in dest_patterns:
-        m = re.search(pat, user_request, re.IGNORECASE)
-        if m:
-            destination = m.group(1)
-            break
+    m = re.search(r'【旅行先】\s*(.+?)(?:\n|【)', user_request)
+    if m:
+        destination = m.group(1).strip()
+
+    # Fallback: English and Japanese city names
+    if destination == "destination":
+        dest_patterns = [
+            r'(Bali|Paris|New York|London|Sydney|Tokyo|Kyoto|Osaka|Bangkok|Ho Chi Minh|Seoul|Taipei|Hawaii|Singapore|Rome|Barcelona|Amsterdam|Dubai|Cancun|Lisbon)',
+            r'(バリ島|パリ|ニューヨーク|ロンドン|シドニー|東京|京都|大阪|タイ|バンコク|ベトナム|ホーチミン|ソウル|台湾|台北|ハワイ|シンガポール|ローマ|バルセロナ)',
+        ]
+        for pat in dest_patterns:
+            m = re.search(pat, user_request, re.IGNORECASE)
+            if m:
+                destination = m.group(1)
+                break
 
     # If still not found, try a generic capitalized word (English city heuristic)
     if destination == "destination":
@@ -347,12 +354,6 @@ def _extract_travel_params(user_request: str) -> dict:
         m = re.search(r'([ぁ-んァ-ヶー一-龯]{2,8}(?:島|市|県|州|国)?)', user_request)
         if m:
             destination = m.group(1)
-
-    # Final fallback: read destination from the structured 【旅行先】 tag
-    if destination == "destination":
-        m = re.search(r'【旅行先】\s*(.+?)(?:\n|【)', user_request)
-        if m:
-            destination = m.group(1).strip()
 
     # Duration — English patterns: "X days", "X-day", "X nights" (+1)
     duration_days = 4  # default
@@ -420,35 +421,55 @@ def _extract_travel_params(user_request: str) -> dict:
 
     interests = ', '.join(found_interests) if found_interests else 'Food & Dining, Sightseeing'
 
+    # Travel style
+    style_map = {
+        'Sightseeing-focused': ['sightseeing', 'sight', '観光重視'],
+        'Food-focused': ['food-focused', 'gourmet', 'グルメ重視', '食重視'],
+        'Resort & Relaxation': ['resort', 'relaxation', 'リゾート', 'リラックス重視'],
+        'Balanced': ['balanced', 'バランス'],
+    }
+    travel_style = 'Balanced'
+    m = re.search(r'【旅行スタイル】\s*(.+?)(?:\n|【|$)', user_request)
+    if m:
+        travel_style = m.group(1).strip()
+    else:
+        for style, kws in style_map.items():
+            if any(kw.lower() in req_lower for kw in kws):
+                travel_style = style
+                break
+
     return {
         "destination": destination,
         "duration_days": duration_days,
         "budget": budget,
         "num_people": num_people,
         "interests": interests,
+        "travel_style": travel_style,
     }
 
 
-def orchestrate_travel_plan(user_request: str) -> str:
-    """Main orchestrator: uses Google Gemini (gemini-1.5-flash) to generate a travel plan."""
+def orchestrate_travel_plan(user_request: str, language: str = "en") -> str:
+    """Main orchestrator: uses Groq (llama-3.3-70b-versatile) to generate a travel plan."""
 
     # Step 1: Extract parameters from the user request
     params = _extract_travel_params(user_request)
     dest = params["destination"]
     days = params["duration_days"]
+
     budget = params["budget"]
     people = params["num_people"]
     interests = params["interests"]
+    travel_style = params["travel_style"]
     daily_budget = budget // people // max(days, 1)
 
     # Step 2: Run all agent tools to gather data
     info        = research_destination(dest, f"{days}-day trip")
     budget_data = calculate_budget(dest, days, budget, people)
-    itinerary   = create_itinerary(dest, days, "Balanced")
+    itinerary   = create_itinerary(dest, days, travel_style)
     exps        = find_experiences(dest, interests, daily_budget)
 
-    # Step 3: Pass collected data as context to the LLM and generate a plan in English
-    context = f"""Please create a travel plan based on the following data.
+    # Step 3: Pass collected data as context to the LLM and generate a plan
+    context = f"""Create a highly detailed, specific travel plan for the following request.
 
 [User Request]
 {user_request}
@@ -459,47 +480,127 @@ def orchestrate_travel_plan(user_request: str) -> str:
 [Budget Breakdown]
 {budget_data}
 
-[Itinerary Data]
+[Itinerary Data — use as a skeleton only; replace any generic entries with real specific place names]
 {itinerary}
 
 [Recommended Experiences]
-{exps}"""
+{exps}
 
-    system_prompt = """You are a professional English-language travel planner.
-Using the provided JSON data, create a well-structured, engaging travel plan in Markdown.
+[IMPORTANT REMINDER]
+- Use real attraction names, real restaurant names, real neighborhood names for {dest}.
+- Include specific details: opening hours, entrance fees, addresses or area names, transport options.
+- The itinerary skeleton above may have generic entries — replace ALL generic entries with your specific local knowledge of {dest}.
+- Aim for the level of detail found in a professional travel guidebook or a Lonely Planet entry."""
 
-CRITICAL: Use ONLY the budget figures from the [Budget Breakdown] JSON data. Do NOT invent or change any budget numbers. The "Total Budget" and "Per Person Budget" values in the JSON are the correct ones to display.
+    is_japanese = language == "ja"
+    lang_instruction = "日本語で書いてください。" if is_japanese else "Write everything in English."
 
-Always follow this structure:
+    if is_japanese:
+        structure = """
+## 🌍 旅行プラン：[実際の目的地名]
 
-## 🌍 Travel Plan: [Destination]
+### ✈️ 旅行概要
+- 目的地・日数・予算・人数を箇条書きで
+
+### 📍 [目的地] について
+- 気候・ベストシーズン・言語・通貨・治安情報
+
+### 💰 予算内訳
+（JSONデータの数値をそのままリスト形式で記載）
+
+### 📅 日程（Day 1〜最終日）
+各日のスケジュールを以下の形式で：
+**Day X：[その日のテーマ]**
+- 🌅 午前：[具体的なスポット名・住所・所要時間・入場料]
+- ☀️ 午後：[具体的なレストラン名や観光地・おすすめメニュー]
+- 🌆 夕方：[具体的な場所・アクティビティ]
+- 🌙 夜：[ディナーのレストラン名や夜の過ごし方]
+- 🚇 移動ヒント：[交通手段・所要時間・費用]
+
+### 🎯 おすすめ体験 & グルメ
+- 必食料理（具体的な店名・住所付き）
+- 見逃せないアクティビティ（予約方法・費用）
+- 地元民も通うローカルスポット
+
+### 💡 旅のヒント
+- 入場料・開館時間の注意点
+- 混雑回避テクニック
+- 持ち物リスト・注意事項"""
+    else:
+        structure = """
+## 🌍 Travel Plan: [Actual Destination Name]
 
 ### ✈️ Trip Overview
-(Destination, duration, budget, and number of travelers — use bullet points)
+- Destination, duration, budget, number of travelers (bullet points)
 
 ### 📍 About [Destination]
-(Climate, language, currency, and top highlights)
+- Climate, best season, language, currency, safety tips
 
 ### 💰 Budget Breakdown
-(Copy the exact budget figures from the JSON data in a table or list format)
+(Use exact figures from JSON data in list format)
 
 ### 📅 Day-by-Day Itinerary
-(Detailed schedule from Day 1 to the final day)
+Format each day as:
+**Day X: [Theme for the day]**
+- 🌅 Morning: [Specific attraction name, area/address, duration, entry fee]
+- ☀️ Afternoon: [Specific restaurant or site name, recommended dishes]
+- 🌆 Evening: [Specific venue or activity with details]
+- 🌙 Night: [Restaurant name or evening activity]
+- 🚇 Transport Tips: [How to get around, duration, cost]
 
-### 🎯 Recommended Experiences
-(Activities and experiences tailored to the traveler's interests)
+### 🎯 Recommended Experiences & Food
+- Must-try dishes (with specific restaurant names and addresses)
+- Top activities (booking info and costs)
+- Hidden local gems off the tourist trail
 
 ### 💡 Travel Tips
-(Reminders, packing list, and useful advice)
+- Opening hours and entry fees for key attractions
+- Crowd-avoidance strategies
+- Packing list and important reminders"""
 
-Write everything in English. Be specific, practical, and make it inspiring to read."""
+    system_prompt = f"""You are an expert travel planner with deep local knowledge of destinations worldwide.
+Using the provided JSON data as a base AND your own extensive knowledge, create a highly detailed and specific travel plan in Markdown.
 
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": context},
-        ],
-    )
+{lang_instruction}
 
-    return response.choices[0].message.content or "Failed to generate a travel plan. Please try again."
+CRITICAL RULES — you MUST follow all of these:
+
+1. **SPECIFIC PLACE NAMES ONLY**: Every attraction, restaurant, market, and neighborhood must use its real, actual name.
+   - ❌ BAD: "Visit a local temple" / "Have lunch at a local restaurant"
+   - ✅ GOOD: "Visit Wat Pho (Th Wang Phraya, 08:00–18:30, ฿200)" / "Lunch at Thip Samai (Maha Chai Rd) — iconic pad thai since 1966"
+
+2. **REAL LOGISTICS**: Include approximate travel times, best visiting hours, entrance fees, and nearest transit stop or landmark directions.
+
+3. **ITINERARY DATA OVERRIDE**: If the provided [Itinerary Data] contains generic entries like "Main sightseeing spots tour" or "Local restaurant lunch", REPLACE them completely with your own specific, real recommendations for {dest}.
+
+4. **BUDGET NUMBERS**: Use ONLY the exact figures from [Budget Breakdown] JSON. Do NOT change or invent any numbers.
+
+5. **LOCAL INSIDER TIPS**: Include at least 2–3 tips that only a local or seasoned traveler would know (e.g., "Buy the 24-hour subway pass at 7-Eleven — it's cheaper than the station vending machine").
+
+6. **FOOD SPECIFICITY**: Name at least 3 specific restaurants or street food stalls with their neighborhood/address and a signature dish recommendation.
+
+Always follow this structure:
+{structure}"""
+
+    for attempt in range(3):
+        try:
+            response = client.chat.completions.create(
+                model=MODEL,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": context},
+                ],
+            )
+            return response.choices[0].message.content or "Failed to generate a travel plan. Please try again."
+        except Exception as e:
+            err = str(e)
+            if "429" in err or "RESOURCE_EXHAUSTED" in err:
+                # Extract retry delay if available, otherwise use exponential backoff
+                import re as _re
+                delay_match = _re.search(r'retry[^\d]*(\d+)', err, _re.IGNORECASE)
+                wait = int(delay_match.group(1)) + 2 if delay_match else (15 * (attempt + 1))
+                print(f"[agents] Rate limited (attempt {attempt+1}/3), retrying in {wait}s...")
+                time.sleep(wait)
+            else:
+                raise
+    return "Failed to generate a travel plan due to API quota limits. Please try again in a few minutes."

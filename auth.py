@@ -1,29 +1,40 @@
 import os
-import jwt
+import httpx
 from fastapi import Header
-from fastapi.responses import JSONResponse
 
-SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET", "")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
+
 
 async def get_current_user(authorization: str = Header(None)) -> dict | None:
-    """Extract and validate Supabase JWT. Returns user dict or None."""
+    """Validate token by calling Supabase /auth/v1/user. Works with both HS256 and ES256."""
     if not authorization or not authorization.startswith("Bearer "):
         return None
     token = authorization.removeprefix("Bearer ").strip()
-    if not SUPABASE_JWT_SECRET:
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    anon_key = os.environ.get("SUPABASE_ANON_KEY", "")
+    if not supabase_url or not anon_key:
         return None
     try:
-        payload = jwt.decode(
-            token,
-            SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
-            options={"verify_aud": False},
-        )
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{supabase_url}/auth/v1/user",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "apikey": anon_key,
+                },
+                timeout=10,
+            )
+        if resp.status_code != 200:
+            return None
+        user = resp.json()
         return {
-            "id": payload.get("sub"),
-            "email": payload.get("email"),
-            "name": payload.get("user_metadata", {}).get("full_name") or payload.get("email", "").split("@")[0],
-            "avatar": payload.get("user_metadata", {}).get("avatar_url"),
+            "id": user.get("id"),
+            "email": user.get("email"),
+            "name": (user.get("user_metadata") or {}).get("full_name")
+                    or (user.get("email") or "").split("@")[0],
+            "avatar": (user.get("user_metadata") or {}).get("avatar_url"),
         }
-    except Exception:
+    except Exception as e:
+        print(f"[auth] Supabase user lookup failed: {e}")
         return None
