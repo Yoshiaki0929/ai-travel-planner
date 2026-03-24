@@ -599,10 +599,20 @@
     .create-room-actions { display:flex; gap:0.5rem; justify-content:flex-end; }
     .create-room-cancel { background:none; border:1.5px solid #e2e8f0; border-radius:0.5rem; padding:0.5rem 1rem; font-size:0.88rem; cursor:pointer; }
     .create-room-submit { background:#3b82f6; color:white; border:none; border-radius:0.5rem; padding:0.5rem 1rem; font-size:0.88rem; font-weight:600; cursor:pointer; }
+    .chat-hamburger { display:none; background:none; border:none; color:#64748b; font-size:1.4rem; cursor:pointer; padding:0.25rem 0.4rem; border-radius:0.4rem; flex-shrink:0; }
+    .chat-hamburger:hover { background:#f1f5f9; }
+    .chat-backdrop { display:none; position:absolute; inset:0; background:rgba(0,0,0,0.45); z-index:9; }
     @media (max-width:640px) {
-      .chat-sidebar { position:absolute; left:-280px; top:0; bottom:0; z-index:10; transition:left 0.2s; }
-      .chat-sidebar.open { left:0; }
+      .chat-layout { position:relative; }
+      .chat-sidebar { position:absolute; left:-280px; top:0; bottom:0; z-index:10; transition:left 0.2s; box-shadow:none; }
+      .chat-sidebar.open { left:0; box-shadow:4px 0 16px rgba(0,0,0,0.25); }
+      .chat-sidebar.open ~ .chat-backdrop { display:block; }
       .chat-main { width:100%; }
+      .chat-hamburger { display:flex; align-items:center; justify-content:center; }
+      .chat-bubble-wrap { max-width:85%; }
+      .chat-input { font-size:16px; }
+      .chat-input-bar { padding:0.6rem 0.75rem; }
+      .chat-messages { padding:0.75rem; }
     }
   </style>
 </head>
@@ -990,14 +1000,17 @@
         <button class="chat-back-btn" onclick="hideChat()">← <span data-i18n="backToPlanner">Back to Planner</span></button>
       </div>
     </div>
+    <div class="chat-backdrop" id="chatBackdrop" onclick="closeChatSidebar()"></div>
     <!-- Main -->
     <div class="chat-main" id="chatMain">
       <div class="chat-no-room" id="chatNoRoom">
+        <button class="chat-hamburger" onclick="toggleChatSidebar()" aria-label="Menu">☰</button>
         <span style="font-size:2.5rem">💬</span>
         <span data-i18n="chatSelectRoom">Select a room to start chatting</span>
       </div>
       <div id="chatWindow" style="display:none;flex:1;flex-direction:column;height:100%">
         <div class="chat-main-header">
+          <button class="chat-hamburger" onclick="toggleChatSidebar()" aria-label="Menu">☰</button>
           <span class="chat-main-title" id="chatRoomTitle"></span>
         </div>
         <div class="chat-messages" id="chatMessages"></div>
@@ -4770,6 +4783,14 @@
     pushRoute('/');
   }
 
+  function toggleChatSidebar() {
+    document.getElementById('chatSidebar').classList.toggle('open');
+  }
+
+  function closeChatSidebar() {
+    document.getElementById('chatSidebar').classList.remove('open');
+  }
+
   function unsubscribeChat() {
     if (_chatChannel) { _chatChannel.unsubscribe(); _chatChannel = null; }
   }
@@ -4840,6 +4861,9 @@
     document.querySelectorAll('.chat-room-item').forEach(el => el.classList.remove('active'));
     const items = document.querySelectorAll('.chat-room-item');
     items.forEach(el => { if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(roomId)) el.classList.add('active'); });
+
+    // Auto-close sidebar on mobile when room is selected
+    if (window.innerWidth <= 640) closeChatSidebar();
 
     // Show chat window
     document.getElementById('chatNoRoom').style.display = 'none';
