@@ -1,0 +1,12 @@
+[2026-03-24 00:55:37] production.ERROR: Class "Illuminate\Http\HttpServiceProvider" not found {"exception":"[object] (Error(code: 0): Class \"Illuminate\\Http\\HttpServiceProvider\" not found at /Users/yoshiakiimai/Desktop/Travel App/laravel/vendor/laravel/framework/src/Illuminate/Foundation/ProviderRepository.php:206)
+[stacktrace]
+#0 /Users/yoshiakiimai/Desktop/Travel App/laravel/vendor/laravel/framework/src/Illuminate/Foundation/ProviderRepository.php(142): Illuminate\\Foundation\\ProviderRepository->createProvider('Illuminate\\\\Http...')
+#1 /Users/yoshiakiimai/Desktop/Travel App/laravel/vendor/laravel/framework/src/Illuminate/Foundation/ProviderRepository.php(61): Illuminate\\Foundation\\ProviderRepository->compileManifest(Array)
+#2 /Users/yoshiakiimai/Desktop/Travel App/laravel/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(871): Illuminate\\Foundation\\ProviderRepository->load(Array)
+#3 /Users/yoshiakiimai/Desktop/Travel App/laravel/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/RegisterProviders.php(37): Illuminate\\Foundation\\Application->registerConfiguredProviders()
+#4 /Users/yoshiakiimai/Desktop/Travel App/laravel/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(342): Illuminate\\Foundation\\Bootstrap\\RegisterProviders->bootstrap(Object(Illuminate\\Foundation\\Application))
+#5 /Users/yoshiakiimai/Desktop/Travel App/laravel/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(474): Illuminate\\Foundation\\Application->bootstrapWith(Array)
+#6 /Users/yoshiakiimai/Desktop/Travel App/laravel/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(196): Illuminate\\Foundation\\Console\\Kernel->bootstrap()
+#7 /Users/yoshiakiimai/Desktop/Travel App/laravel/artisan(14): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#8 {main}
+"} 
