@@ -5,8 +5,18 @@ use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\FriendController;
+use App\Http\Middleware\AdminAuth;
 use App\Http\Middleware\SupabaseAuth;
+
+// ── Admin ──────────────────────────────────────────────────
+Route::middleware(AdminAuth::class)->prefix('admin')->group(function () {
+    Route::get('/overview',       [AdminController::class, 'overview']);
+    Route::get('/stats/daily',    [AdminController::class, 'dailyStats']);
+    Route::get('/stats/content',  [AdminController::class, 'contentStats']);
+    Route::get('/users',          [AdminController::class, 'users']);
+});
 
 // ── Public ────────────────────────────────────────────────
 Route::get('/config',  [ConfigController::class, 'show'])->middleware('throttle:api-general');
