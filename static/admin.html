@@ -140,22 +140,22 @@
 </div>
 
 <script>
-  let supabase = null;
+  let _supabase = null;
   let currentToken = null;
 
   async function init() {
     const res = await fetch('/api/config');
     const cfg = await res.json();
-    supabase = window.supabase.createClient(cfg.supabase_url, cfg.supabase_anon_key);
+    _supabase = window.supabase.createClient(cfg.supabase_url, cfg.supabase_anon_key);
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await _supabase.auth.getSession();
     if (session) {
       await handleSession(session);
     } else {
       document.getElementById('loginScreen').style.display = 'flex';
     }
 
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    _supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) await handleSession(session);
       else showLogin();
     });
@@ -199,7 +199,7 @@
 
   async function loginWithGoogle() {
     document.getElementById('loginError').style.display = 'none';
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { error } = await _supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.href }
     });
@@ -211,7 +211,7 @@
   }
 
   async function logout() {
-    await supabase.auth.signOut();
+    await _supabase.auth.signOut();
     showLogin();
   }
 
