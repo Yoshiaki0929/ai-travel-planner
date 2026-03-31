@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - TravelBook</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f0f4f8; color: #2d3748; min-height: 100vh; }
+
+    header {
+      color: white; padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between;
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    }
+    header h1 { font-size: 1.4rem; font-weight: 800; }
+    header .subtitle { font-size: 0.8rem; opacity: 0.6; margin-top: 0.2rem; }
+    #userInfo { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; }
+    #userInfo img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+    #logoutBtn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.3rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.82rem; }
+    #logoutBtn:hover { background: rgba(255,255,255,0.25); }
+
+    #loginScreen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-card { background: white; border-radius: 16px; padding: 2.5rem; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
+    .login-card h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .login-card p { color: #64748b; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .btn { display: inline-block; padding: 0.65rem 1.5rem; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+    .btn-primary { background: #0891b2; color: white; }
+    .btn-primary:hover { background: #0e7490; }
+    .btn-danger { background: #ef4444; color: white; font-size: 0.8rem; padding: 0.3rem 0.7rem; border-radius: 6px; }
+    .btn-danger:hover { background: #dc2626; }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    #accessDenied { text-align: center; padding: 4rem; color: #ef4444; }
+    #accessDenied h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: white; border-radius: 12px; padding: 1.25rem 1.5rem; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+    .stat-card .label { font-size: 0.78rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-card .value { font-size: 2rem; font-weight: 800; color: #0891b2; margin-top: 0.25rem; }
+
+    .section { background: white; border-radius: 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); margin-bottom: 1.5rem; overflow: hidden; }
+    .section-header { padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; }
+    .section-header h2 { font-size: 1rem; font-weight: 700; }
+    .section-header .count { background: #e0f2fe; color: #0891b2; font-size: 0.78rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 20px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th { background: #f8fafc; padding: 0.65rem 1rem; text-align: left; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e2e8f0; }
+    td { padding: 0.65rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+    .avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-right: 0.5rem; vertical-align: middle; }
+    .badge { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; }
+    .badge-public { background: #dcfce7; color: #166534; }
+    .badge-private { background: #fee2e2; color: #991b1b; }
+    .truncate { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .loading { padding: 2rem; text-align: center; color: #94a3b8; }
+    .refresh-btn { background: #f1f5f9; border: none; padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; color: #475569; font-weight: 600; }
+    .refresh-btn:hover { background: #e2e8f0; }
+  </style>
+</head>
+<body>
+
+<!-- Login screen -->
+<div id="loginScreen" style="display:none">
+  <div class="login-card">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem">🛡️</div>
+    <h2>Admin Dashboard</h2>
+    <p>管理者アカウントでログインしてください</p>
+    <button class="btn btn-primary" onclick="loginWithGoogle()">Googleでログイン</button>
+    <div id="loginError" style="margin-top:1rem;color:#ef4444;font-size:0.85rem;display:none"></div>
+  </div>
+</div>
+
+<!-- Access denied -->
+<div id="accessDenied" style="display:none">
+  <h2>アクセス拒否</h2>
+  <p>このアカウントには管理者権限がありません。</p>
+  <button class="btn btn-primary" style="margin-top:1rem" onclick="logout()">ログアウト</button>
+</div>
+
+<!-- Main dashboard -->
+<div id="dashboard" style="display:none">
+  <header>
+    <div>
+      <h1>🛡️ Admin Dashboard</h1>
+      <div class="subtitle">TravelBook 管理者パネル</div>
+    </div>
+    <div id="userInfo">
+      <img id="adminAvatar" src="" alt="" onerror="this.style.display='none'" />
+      <span id="adminEmail"></span>
+      <button id="logoutBtn" class="btn" onclick="logout()">ログアウト</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card"><div class="label">総ユーザー数</div><div class="value" id="statUsers">-</div></div>
+      <div class="stat-card"><div class="label">保存済みプラン</div><div class="value" id="statPlans">-</div></div>
+      <div class="stat-card"><div class="label">投稿写真</div><div class="value" id="statPhotos">-</div></div>
+      <div class="stat-card"><div class="label">フレンド関係</div><div class="value" id="statFriends">-</div></div>
+    </div>
+
+    <!-- Users -->
+    <div class="section">
+      <div class="section-header">
+        <h2>ユーザー一覧</h2>
+        <div style="display:flex;gap:0.5rem;align-items:center">
+          <span class="count" id="userCount">0</span>
+          <button class="refresh-btn" onclick="loadUsers()">更新</button>
+        </div>
+      </div>
+      <div id="usersTable"><div class="loading">読み込み中...</div></div>
+    </div>
+
+    <!-- Photos -->
+    <div class="section">
+      <div class="section-header">
+        <h2>最近の投稿</h2>
+        <div style="display:flex;gap:0.5rem;align-items:center">
+          <span class="count" id="photoCount">0</span>
+          <button class="refresh-btn" onclick="loadPhotos()">更新</button>
+        </div>
+      </div>
+      <div id="photosTable"><div class="loading">読み込み中...</div></div>
+    </div>
+
+    <!-- Plans -->
+    <div class="section">
+      <div class="section-header">
+        <h2>最近のプラン</h2>
+        <div style="display:flex;gap:0.5rem;align-items:center">
+          <span class="count" id="planCount">0</span>
+          <button class="refresh-btn" onclick="loadPlans()">更新</button>
+        </div>
+      </div>
+      <div id="plansTable"><div class="loading">読み込み中...</div></div>
+    </div>
+  </main>
+</div>
+
+<script>
+  let supabase = null;
+  let currentToken = null;
+
+  async function init() {
+    const res = await fetch('/api/config');
+    const cfg = await res.json();
+    supabase = window.supabase.createClient(cfg.supabase_url, cfg.supabase_anon_key);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      await handleSession(session);
+    } else {
+      document.getElementById('loginScreen').style.display = 'flex';
+    }
+
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) await handleSession(session);
+      else showLogin();
+    });
+  }
+
+  async function handleSession(session) {
+    currentToken = session.access_token;
+    const res = await fetch('/api/admin/check', {
+      headers: { 'Authorization': 'Bearer ' + currentToken }
+    });
+    if (!res.ok) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('accessDenied').style.display = 'block';
+      return;
+    }
+    showDashboard(session);
+  }
+
+  function showLogin() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('accessDenied').style.display = 'none';
+  }
+
+  function showDashboard(session) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('accessDenied').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+
+    const user = session.user;
+    document.getElementById('adminEmail').textContent = user.email;
+    const avatar = (user.user_metadata || {}).avatar_url || '';
+    if (avatar) document.getElementById('adminAvatar').src = avatar;
+
+    loadStats();
+    loadUsers();
+    loadPhotos();
+    loadPlans();
+  }
+
+  async function loginWithGoogle() {
+    document.getElementById('loginError').style.display = 'none';
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href }
+    });
+    if (error) {
+      const el = document.getElementById('loginError');
+      el.textContent = error.message;
+      el.style.display = 'block';
+    }
+  }
+
+  async function logout() {
+    await supabase.auth.signOut();
+    showLogin();
+  }
+
+  function authHeaders() {
+    return { 'Authorization': 'Bearer ' + currentToken };
+  }
+
+  async function loadStats() {
+    const res = await fetch('/api/admin/stats', { headers: authHeaders() });
+    if (!res.ok) return;
+    const s = await res.json();
+    document.getElementById('statUsers').textContent = s.users ?? '-';
+    document.getElementById('statPlans').textContent = s.plans ?? '-';
+    document.getElementById('statPhotos').textContent = s.photos ?? '-';
+    document.getElementById('statFriends').textContent = s.friends ?? '-';
+  }
+
+  async function loadUsers() {
+    document.getElementById('usersTable').innerHTML = '<div class="loading">読み込み中...</div>';
+    const res = await fetch('/api/admin/users', { headers: authHeaders() });
+    if (!res.ok) { document.getElementById('usersTable').innerHTML = '<div class="loading">取得失敗</div>'; return; }
+    const users = await res.json();
+    document.getElementById('userCount').textContent = users.length;
+    if (!users.length) { document.getElementById('usersTable').innerHTML = '<div class="loading">データなし</div>'; return; }
+
+    const rows = users.map(u => `
+      <tr>
+        <td>
+          ${u.avatar ? `<img class="avatar" src="${escHtml(u.avatar)}" />` : ''}
+          ${escHtml(u.display_name || u.email.split('@')[0])}
+        </td>
+        <td>${escHtml(u.email)}</td>
+        <td>${escHtml(u.home_city || '-')}</td>
+        <td style="color:#94a3b8;font-size:0.8rem">${fmtDate(u.created_at)}</td>
+      </tr>`).join('');
+
+    document.getElementById('usersTable').innerHTML = `
+      <table>
+        <thead><tr><th>名前</th><th>メール</th><th>出身地</th><th>登録日</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  async function loadPhotos() {
+    document.getElementById('photosTable').innerHTML = '<div class="loading">読み込み中...</div>';
+    const res = await fetch('/api/admin/photos', { headers: authHeaders() });
+    if (!res.ok) { document.getElementById('photosTable').innerHTML = '<div class="loading">取得失敗</div>'; return; }
+    const photos = await res.json();
+    document.getElementById('photoCount').textContent = photos.length;
+    if (!photos.length) { document.getElementById('photosTable').innerHTML = '<div class="loading">データなし</div>'; return; }
+
+    const rows = photos.map(p => `
+      <tr>
+        <td>${p.image_url ? `<img src="${escHtml(p.image_url)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px" />` : '-'}</td>
+        <td>${escHtml(p.destination)}</td>
+        <td class="truncate">${escHtml(p.caption || '-')}</td>
+        <td>${escHtml(p.user_name || '-')}</td>
+        <td><span class="badge badge-${p.visibility}">${p.visibility}</span></td>
+        <td>❤️ ${p.like_count || 0}</td>
+        <td style="color:#94a3b8;font-size:0.8rem">${fmtDate(p.created_at)}</td>
+        <td><button class="btn btn-danger" onclick="deletePhoto('${p.id}', this)">削除</button></td>
+      </tr>`).join('');
+
+    document.getElementById('photosTable').innerHTML = `
+      <table>
+        <thead><tr><th>画像</th><th>行き先</th><th>キャプション</th><th>投稿者</th><th>公開</th><th>いいね</th><th>日時</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  async function deletePhoto(photoId, btn) {
+    if (!confirm('この投稿を削除しますか？')) return;
+    btn.disabled = true;
+    btn.textContent = '...';
+    const res = await fetch('/api/admin/photos/' + photoId, {
+      method: 'DELETE',
+      headers: authHeaders()
+    });
+    if (res.ok) {
+      btn.closest('tr').remove();
+      const cnt = document.getElementById('photoCount');
+      cnt.textContent = parseInt(cnt.textContent) - 1;
+    } else {
+      btn.disabled = false;
+      btn.textContent = '削除';
+      alert('削除に失敗しました');
+    }
+  }
+
+  async function loadPlans() {
+    document.getElementById('plansTable').innerHTML = '<div class="loading">読み込み中...</div>';
+    const res = await fetch('/api/admin/plans', { headers: authHeaders() });
+    if (!res.ok) { document.getElementById('plansTable').innerHTML = '<div class="loading">取得失敗</div>'; return; }
+    const plans = await res.json();
+    document.getElementById('planCount').textContent = plans.length;
+    if (!plans.length) { document.getElementById('plansTable').innerHTML = '<div class="loading">データなし</div>'; return; }
+
+    const rows = plans.map(p => `
+      <tr>
+        <td>${escHtml(p.destination)}</td>
+        <td>${p.duration_days}日</td>
+        <td>¥${Number(p.budget_jpy || 0).toLocaleString()}</td>
+        <td style="color:#94a3b8;font-size:0.8rem">${fmtDate(p.created_at)}</td>
+      </tr>`).join('');
+
+    document.getElementById('plansTable').innerHTML = `
+      <table>
+        <thead><tr><th>目的地</th><th>日数</th><th>予算</th><th>作成日</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '-';
+    return new Date(iso).toLocaleString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+  }
+
+  function escHtml(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  init();
+</script>
+</body>
+</html>

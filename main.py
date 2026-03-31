@@ -736,6 +736,190 @@ async def health():
     return {"status": "ok"}
 
 
+# ===== ADMIN =====
+
+def _is_admin(user: dict) -> bool:
+    admin_emails = os.environ.get("ADMIN_EMAILS", "")
+    allowed = [e.strip() for e in admin_emails.split(",") if e.strip()]
+    return bool(allowed) and user.get("email") in allowed
+
+
+@app.get("/admin")
+async def admin_page():
+    return FileResponse("static/admin.html")
+
+
+@app.get("/api/admin/check")
+async def admin_check(authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    if not user or not _is_admin(user):
+        return JSONResponse(status_code=403, content={"error": "Forbidden"})
+    return {"ok": True, "email": user["email"]}
+
+
+@app.get("/api/admin/stats")
+async def admin_stats(authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    if not user or not _is_admin(user):
+        return JSONResponse(status_code=403, content={"error": "Forbidden"})
+
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    headers = {"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}",
+               "Prefer": "count=exact", "Range-Unit": "items", "Range": "0-0"}
+
+    async def count(table: str) -> int:
+        async with httpx.AsyncClient() as client:
+            r = await client.get(f"{supabase_url}/rest/v1/{table}", headers=headers)
+        cr = r.headers.get("content-range", "0/0")
+        return int(cr.split("/")[-1]) if "/" in cr else 0
+
+    plans, photos, friends = await asyncio.gather(
+        count("saved_plans"), count("photos"), count("friendships")
+    )
+
+    # User count via auth admin API
+    users = 0
+    async with httpx.AsyncClient() as client:
+        r = await client.get(
+            f"{supabase_url}/auth/v1/admin/users?page=1&per_page=1",
+            headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"},
+        )
+    if r.status_code == 200:
+        data = r.json()
+        users = data.get("total", 0) or len(data.get("users", []))
+
+    return {"users": users, "plans": plans, "photos": photos, "friends": friends}
+
+
+@app.get("/api/admin/users")
+async def admin_users(authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    if not user or not _is_admin(user):
+        return JSONResponse(status_code=403, content={"error": "Forbidden"})
+
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+
+    async with httpx.AsyncClient() as client:
+        r = await client.get(
+            f"{supabase_url}/auth/v1/admin/users?page=1&per_page=200",
+            headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"},
+        )
+    if r.status_code != 200:
+        return []
+    auth_users = r.json().get("users", [])
+
+    async with httpx.AsyncClient() as client:
+        pr = await client.get(
+            f"{supabase_url}/rest/v1/profiles?limit=500",
+            headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"},
+        )
+    profiles = {p["user_id"]: p for p in (pr.json() if pr.status_code == 200 else [])}
+
+    result = []
+    for u in auth_users:
+        uid = u.get("id")
+        profile = profiles.get(uid, {})
+        result.append({
+            "id": uid,
+            "email": u.get("email", ""),
+            "display_name": profile.get("display_name") or (u.get("user_metadata") or {}).get("full_name", ""),
+            "avatar": (u.get("user_metadata") or {}).get("avatar_url", ""),
+            "home_city": profile.get("home_city", ""),
+            "created_at": u.get("created_at", ""),
+        })
+    return result
+
+
+@app.get("/api/admin/photos")
+async def admin_photos(authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    if not user or not _is_admin(user):
+        return JSONResponse(status_code=403, content={"error": "Forbidden"})
+
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    async with httpx.AsyncClient() as client:
+        r = await client.get(
+            f"{supabase_url}/rest/v1/photos?order=created_at.desc&limit=100",
+            headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"},
+        )
+    return r.json() if r.status_code == 200 else []
+
+
+@app.delete("/api/admin/photos/{photo_id}")
+async def admin_delete_photo(photo_id: str, authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    if not user or not _is_admin(user):
+        return JSONResponse(status_code=403, content={"error": "Forbidden"})
+
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    headers = {"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"}
+
+    # Fetch to get image_url for storage cleanup
+    async with httpx.AsyncClient() as client:
+        fr = await client.get(
+            f"{supabase_url}/rest/v1/photos?id=eq.{photo_id}&limit=1",
+            headers=headers,
+        )
+    photos = fr.json() if fr.status_code == 200 else []
+    if photos:
+        image_url = photos[0].get("image_url", "")
+        marker = "/storage/v1/object/public/travel-photos/"
+        if marker in image_url:
+            file_path = image_url.split(marker, 1)[1]
+            async with httpx.AsyncClient() as client:
+                await client.delete(
+                    f"{supabase_url}/storage/v1/object/travel-photos/{file_path}",
+                    headers={"Authorization": f"Bearer {supabase_key}"},
+                )
+
+    async with httpx.AsyncClient() as client:
+        dr = await client.delete(
+            f"{supabase_url}/rest/v1/photos?id=eq.{photo_id}",
+            headers=headers,
+        )
+    return {"ok": dr.status_code == 204}
+
+
+@app.get("/api/admin/plans")
+async def admin_plans(authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    if not user or not _is_admin(user):
+        return JSONResponse(status_code=403, content={"error": "Forbidden"})
+
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    async with httpx.AsyncClient() as client:
+        r = await client.get(
+            f"{supabase_url}/rest/v1/saved_plans?order=created_at.desc&limit=100&select=id,destination,duration_days,budget_jpy,created_at",
+            headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"},
+        )
+    return r.json() if r.status_code == 200 else []
+
+
+@app.post("/github-webhook")
+async def github_webhook(request: Request):
+    import hmac, hashlib, subprocess, sys, threading
+    secret = os.environ.get("WEBHOOK_SECRET", "").encode()
+    body = await request.body()
+    if secret:
+        sig = request.headers.get("X-Hub-Signature-256", "")
+        expected = "sha256=" + hmac.new(secret, body, hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected):
+            return JSONResponse({"error": "invalid signature"}, status_code=403)
+    def pull_and_restart():
+        cwd = os.path.dirname(__file__)
+        subprocess.run(["git", "stash"], cwd=cwd)
+        subprocess.run(["git", "pull", "origin", "main"], cwd=cwd)
+        subprocess.run(["git", "stash", "pop"], cwd=cwd)
+        sys.exit(0)
+    threading.Thread(target=pull_and_restart, daemon=True).start()
+    return {"ok": True}
+
+
 # ===== CHAT =====
 
 _global_room_id: str = ""
@@ -1098,7 +1282,7 @@ if os.environ.get("DEBUG_ENDPOINTS") == "true":
         secret = os.environ.get("SUPABASE_JWT_SECRET", "")
         if not authorization:
             return {"error": "No Authorization header"}
-        token = authorization.removeprefix("Bearer ").strip()
+        token = authorization[len("Bearer "):].strip()
         try:
             payload = pyjwt.decode(token, secret, algorithms=["HS256"], options={"verify_aud": False})
             return {"ok": True, "sub": payload.get("sub"), "email": payload.get("email"), "role": payload.get("role")}
