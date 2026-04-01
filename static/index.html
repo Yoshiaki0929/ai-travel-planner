@@ -615,6 +615,14 @@
       .chat-messages { padding:0.75rem; }
     }
 
+    /* ===== USER PROFILE ACTION BUTTONS ===== */
+    .up-action-btn {
+      background:#3b82f6; color:white; border:none; border-radius:0.5rem;
+      padding:0.4rem 0.85rem; font-size:0.82rem; font-weight:600; cursor:pointer;
+      transition:background 0.15s;
+    }
+    .up-action-btn:hover { background:#2563eb; }
+
     /* ===== CALL BUTTONS ===== */
     .call-btn {
       background:none; border:1.5px solid #e2e8f0; border-radius:0.5rem;
@@ -946,6 +954,11 @@
         <div class="up-name" id="upName"></div>
         <div class="up-city" id="upCity" style="display:none"></div>
         <div class="up-bio" id="upBio" style="display:none"></div>
+        <div class="up-actions" id="upActions" style="display:none;gap:0.5rem;margin-top:0.6rem;flex-wrap:wrap">
+          <button class="up-action-btn" id="upDmBtn" onclick="startDM(window._upUserId)">💬 <span data-i18n="chatDM">DM</span></button>
+          <button class="up-action-btn" id="upVoiceBtn" onclick="startCallFromProfile('voice')">📞 <span data-i18n="callVoice">Voice</span></button>
+          <button class="up-action-btn" id="upVideoBtn" onclick="startCallFromProfile('video')">📹 <span data-i18n="callVideo">Video</span></button>
+        </div>
       </div>
     </div>
     <div class="up-posts-title" id="upPostsTitle">Posts</div>
@@ -4104,6 +4117,11 @@
     document.getElementById('upCity').style.display = 'none';
     document.getElementById('upBio').style.display = 'none';
     document.getElementById('upFeed').innerHTML = `<div style="text-align:center;color:#94a3b8;padding:2rem">${t('loadingText')}</div>`;
+    // Show action buttons only for other users (not own profile)
+    window._upUserId = userId;
+    const actionsEl = document.getElementById('upActions');
+    const isOwnProfile = currentUser && userId === currentUser.id;
+    actionsEl.style.display = isOwnProfile ? 'none' : 'flex';
     document.getElementById('userprofile').classList.add('active');
 
     // Fetch profile + posts in parallel
@@ -5206,6 +5224,23 @@
       await showChat();
       openRoom(resp.id, resp.display_name || t('chatDM'));
     }
+  }
+
+  // Start call from user profile page (opens DM room first, then calls)
+  async function startCallFromProfile(type) {
+    const userId = window._upUserId;
+    if (!userId || !currentUser) return;
+    if (!currentUser) { openLoginModal(); return; }
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const resp = await fetch(`/api/chat/dm/${userId}`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${session.access_token}` }
+    }).then(r => r.json()).catch(() => null);
+    if (!resp || !resp.id) { alert('Could not open DM. Make sure you are friends first.'); return; }
+    await showChat();
+    await openRoom(resp.id, resp.display_name || t('chatDM'));
+    // Small delay to let channel subscribe before sending broadcast
+    setTimeout(() => startCall(type), 500);
   }
 
   // ===== VOICE / VIDEO CALL (WebRTC + Supabase Broadcast) =====
