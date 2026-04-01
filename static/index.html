@@ -5345,8 +5345,27 @@
   async function acceptCall() {
     document.getElementById('callIncomingBanner').style.display = 'none';
     _callState = 'connecting';
-    _sendCallSignal('call-accept', { targetId: _callCallerId, calleeId: currentUser.id, roomId: _callRoomId });
     _showCallOverlay(t('callConnecting'));
+
+    // Get local media (callee side — missed in original implementation)
+    try {
+      const constraints = _callType === 'video'
+        ? { audio: true, video: { width: { ideal: 1280 }, height: { ideal: 720 } } }
+        : { audio: true, video: false };
+      _localStream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch {
+      _teardownCall(false);
+      const callerId = _callCallerId;
+      alert(t('callPermError'));
+      if (callerId) _sendCallSignal('call-decline', { targetId: callerId, calleeId: currentUser.id, roomId: _callRoomId });
+      return;
+    }
+
+    if (_callType === 'video') {
+      document.getElementById('callLocalVideo').srcObject = _localStream;
+    }
+
+    _sendCallSignal('call-accept', { targetId: _callCallerId, calleeId: currentUser.id, roomId: _callRoomId });
     await _setupWebRTC(false);
   }
 
