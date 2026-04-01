@@ -3816,11 +3816,12 @@
         if (session?.user) {
           currentUser = session.user;
           renderUserMenu(session.user);
-          _initGlobalCallChannel();
+          _initCallReceiveChannel(session.user.id);
         } else {
           currentUser = null;
           renderLoginBtn();
-          if (_globalCallChannel) { _globalCallChannel.unsubscribe(); _globalCallChannel = null; }
+          if (_callReceiveChannel) { _callReceiveChannel.unsubscribe(); _callReceiveChannel = null; }
+          if (_callSendChannel)    { _callSendChannel.unsubscribe();    _callSendChannel    = null; }
         }
       });
 
@@ -3829,7 +3830,7 @@
       if (session?.user) {
         currentUser = session.user;
         renderUserMenu(session.user);
-        _initGlobalCallChannel();
+        _initCallReceiveChannel(session.user.id);
       }
     } catch (e) { console.warn('Auth init failed', e); }
 
@@ -4966,7 +4967,8 @@
   let _callTimeoutHandle = null;
   let _isMuted = false;
   let _isCameraOff = false;
-  let _globalCallChannel = null; // persistent channel subscribed at login
+  let _callReceiveChannel = null; // own channel: call:{userId} — subscribed at login
+  let _callSendChannel   = null; // target channel: call:{targetId} — subscribed per call
   const RTC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
 
   async function showChat() {
@@ -5242,12 +5244,12 @@
 
   // ===== VOICE / VIDEO CALL (WebRTC + Supabase Broadcast) =====
 
-  // Subscribe a persistent global call channel at login so incoming calls
-  // are received regardless of which page the user is on.
-  function _initGlobalCallChannel() {
-    if (_globalCallChannel) return;
-    _globalCallChannel = supabaseClient
-      .channel('global_calls')
+  // Each user subscribes to their own channel call:{userId} at login.
+  // Incoming signals arrive here regardless of which page the user is on.
+  function _initCallReceiveChannel(userId) {
+    if (_callReceiveChannel) return;
+    _callReceiveChannel = supabaseClient
+      .channel(`call:${userId}`)
       .on('broadcast', { event: 'call-invite'  }, msg => _onCallInvite(msg.payload))
       .on('broadcast', { event: 'call-accept'  }, msg => _onCallAccept(msg.payload))
       .on('broadcast', { event: 'call-decline' }, msg => _onCallDecline(msg.payload))
@@ -5259,9 +5261,21 @@
       .subscribe();
   }
 
-  // Send a call signaling event to the target user via the global channel.
-  function _sendCallSignal(event, payload) {
-    if (_globalCallChannel) _globalCallChannel.send({ type: 'broadcast', event, payload });
+  // Subscribe to the target user's channel so we can send signals to them.
+  async function _ensureSendChannel(targetUserId) {
+    if (_callSendChannel) return;
+    await new Promise(resolve => {
+      _callSendChannel = supabaseClient
+        .channel(`call:${targetUserId}`)
+        .subscribe(status => { if (status === 'SUBSCRIBED' || status === 'CHANNEL_ERROR') resolve(); });
+    });
+  }
+
+  async function _sendCallSignal(event, payload) {
+    const targetId = payload.targetId;
+    if (!targetId || !supabaseClient) return;
+    await _ensureSendChannel(targetId);
+    if (_callSendChannel) _callSendChannel.send({ type: 'broadcast', event, payload });
   }
 
   async function _fetchDmPeer(roomId) {
@@ -5278,7 +5292,7 @@
 
   async function startCall(type) {
     if (_callState !== 'idle') return;
-    if (!_globalCallChannel) return;
+    if (!_callReceiveChannel) return;
     const room = _chatRooms.find(r => r.id === _callRoomId);
     if (!room || room.type !== 'dm') return;
     if (!_callPeer) {
@@ -5410,7 +5424,8 @@
     const lv = document.getElementById('callLocalVideo');
     if (rv) rv.srcObject = null;
     if (lv) lv.srcObject = null;
-    _callState = 'idle'; _callType = null; _isMuted = false; _isCameraOff = false;
+    if (_callSendChannel) { _callSendChannel.unsubscribe(); _callSendChannel = null; }
+    _callState = 'idle'; _callType = null; _callCallerId = null; _isMuted = false; _isCameraOff = false;
     document.getElementById('callOverlay').style.display = 'none';
     document.getElementById('callIncomingBanner').style.display = 'none';
     const muteBtn = document.getElementById('callMuteBtn');
