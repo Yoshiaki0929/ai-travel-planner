@@ -506,7 +506,9 @@
     .tl-visibility-btn { background: #f1f5f9; border: 1.5px solid #e2e8f0; border-radius: 2rem; padding: 0.2rem 0.7rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; color: #475569; transition: all 0.15s; white-space: nowrap; }
     .tl-visibility-btn:hover { background: #e2e8f0; }
     .tl-visibility-btn.private { background: #fef3c7; border-color: #fde68a; color: #92400e; }
+    .tl-visibility-btn.friends { background: #dbeafe; border-color: #93c5fd; color: #1e40af; }
     .tl-private-badge { background: #fef3c7; color: #92400e; border-radius: 2rem; padding: 0.05rem 0.5rem; font-size: 0.72rem; font-weight: 700; }
+    .tl-friends-badge { background: #dbeafe; color: #1e40af; border-radius: 2rem; padding: 0.05rem 0.5rem; font-size: 0.72rem; font-weight: 700; }
     .tl-vis-toggle { background: none; border: 1.5px solid #e2e8f0; border-radius: 2rem; padding: 0.15rem 0.6rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; color: #64748b; transition: all 0.15s; white-space: nowrap; }
     .tl-vis-toggle:hover { background: #f1f5f9; }
     .tl-vis-toggle.private { background: #fef9c3; border-color: #fde68a; color: #92400e; }
@@ -1250,8 +1252,8 @@
       uploading: 'Posting...', uploadDone: '✅ Posted!',
       sharePhotoBtn: '📷 Share Photo', confirmDeletePhoto: 'Delete this post?',
       tlPostBtn: 'Post', tlComposePh: 'Share your travel experience... (up to 300 chars)',
-      visibilityPublic: 'Public', visibilityPrivate: 'Private',
-      makePublic: '🌐 Make Public', makePrivate: '🔒 Make Private',
+      visibilityPublic: 'Public', visibilityPrivate: 'Private', visibilityFriends: 'Friends Only',
+      makePublic: '🌐 Make Public', makePrivate: '🔒 Make Private', makeFriendsOnly: '👥 Friends Only',
       editPost: '✏️', editSave: 'Save', editCancel: 'Cancel',
       savedPlansCount: 'Saved Plans', loadingText: 'Loading...', notLoggedIn: 'Not logged in',
       noPlansText: 'No saved plans yet.\nGenerate your first travel plan!',
@@ -1364,8 +1366,8 @@
       uploading: '投稿中...', uploadDone: '✅ 投稿しました！',
       sharePhotoBtn: '📷 写真をシェア', confirmDeletePhoto: 'この投稿を削除しますか？',
       tlPostBtn: '投稿する', tlComposePh: '旅の思い出をシェアしよう...（300文字まで）',
-      visibilityPublic: '公開', visibilityPrivate: '非公開',
-      makePublic: '🌐 公開にする', makePrivate: '🔒 非公開にする',
+      visibilityPublic: '公開', visibilityPrivate: '非公開', visibilityFriends: '友達のみ',
+      makePublic: '🌐 公開にする', makePrivate: '🔒 非公開にする', makeFriendsOnly: '👥 友達のみ',
       editPost: '✏️', editSave: '保存', editCancel: 'キャンセル',
       savedPlansCount: '保存済みプラン', loadingText: '読み込み中...', notLoggedIn: 'ログインしていません',
       noPlansText: 'まだプランが保存されていません。\n最初の旅行プランを作成しましょう！',
@@ -1472,8 +1474,8 @@
       uploadLabelDest: '目的地', uploading: '发布中...', uploadDone: '✅ 已发布！',
       sharePhotoBtn: '📷 分享照片', confirmDeletePhoto: '删除此帖子？',
       tlPostBtn: '发布', tlComposePh: '分享您的旅行体验...（最多 300 字）',
-      visibilityPublic: '公开', visibilityPrivate: '私密',
-      makePublic: '🌐 设为公开', makePrivate: '🔒 设为私密',
+      visibilityPublic: '公开', visibilityPrivate: '私密', visibilityFriends: '仅好友',
+      makePublic: '🌐 设为公开', makePrivate: '🔒 设为私密', makeFriendsOnly: '👥 仅好友',
       editPost: '✏️', editSave: '保存', editCancel: '取消',
       savedPlansCount: '已保存计划', loadingText: '加载中...', notLoggedIn: '未登录',
       noPlansText: '还没有已保存的计划。\n开始生成第一个旅行计划吧！',
@@ -1552,8 +1554,8 @@
       uploadLabelDest: 'गंतव्य', uploading: 'पोस्ट हो रहा है...', uploadDone: '✅ पोस्ट हो गया!',
       sharePhotoBtn: '📷 फोटो शेयर करें', confirmDeletePhoto: 'इस पोस्ट को हटाएं?',
       tlPostBtn: 'पोस्ट', tlComposePh: 'अपना यात्रा अनुभव साझा करें... (300 अक्षर तक)',
-      visibilityPublic: 'सार्वजनिक', visibilityPrivate: 'निजी',
-      makePublic: '🌐 सार्वजनिक बनाएं', makePrivate: '🔒 निजी बनाएं',
+      visibilityPublic: 'सार्वजनिक', visibilityPrivate: 'निजी', visibilityFriends: 'केवल मित्र',
+      makePublic: '🌐 सार्वजनिक बनाएं', makePrivate: '🔒 निजी बनाएं', makeFriendsOnly: '👥 केवल मित्र',
       editPost: '✏️', editSave: 'सहेजें', editCancel: 'रद्द करें',
       savedPlansCount: 'सहेजी गई योजनाएं', loadingText: 'लोड हो रहा है...', notLoggedIn: 'लॉग इन नहीं है',
       noPlansText: 'अभी कोई सहेजी गई योजना नहीं।\nपहली यात्रा योजना बनाएं!',
@@ -1632,8 +1634,8 @@
       uploadLabelDest: 'Destino', uploading: 'Publicando...', uploadDone: '✅ ¡Publicado!',
       sharePhotoBtn: '📷 Compartir foto', confirmDeletePhoto: '¿Eliminar esta publicación?',
       tlPostBtn: 'Publicar', tlComposePh: 'Comparte tu experiencia de viaje... (hasta 300 caracteres)',
-      visibilityPublic: 'Público', visibilityPrivate: 'Privado',
-      makePublic: '🌐 Hacer público', makePrivate: '🔒 Hacer privado',
+      visibilityPublic: 'Público', visibilityPrivate: 'Privado', visibilityFriends: 'Solo amigos',
+      makePublic: '🌐 Hacer público', makePrivate: '🔒 Hacer privado', makeFriendsOnly: '👥 Solo amigos',
       editPost: '✏️', editSave: 'Guardar', editCancel: 'Cancelar',
       savedPlansCount: 'Planes guardados', loadingText: 'Cargando...', notLoggedIn: 'No has iniciado sesión',
       noPlansText: 'No hay planes guardados.\n¡Genera tu primer plan de viaje!',
@@ -1712,8 +1714,8 @@
       uploadLabelDest: 'Destination', uploading: 'Publication...', uploadDone: '✅ Publié !',
       sharePhotoBtn: '📷 Partager une photo', confirmDeletePhoto: 'Supprimer cette publication ?',
       tlPostBtn: 'Publier', tlComposePh: 'Partagez votre expérience de voyage... (300 caractères max)',
-      visibilityPublic: 'Public', visibilityPrivate: 'Privé',
-      makePublic: '🌐 Rendre public', makePrivate: '🔒 Rendre privé',
+      visibilityPublic: 'Public', visibilityPrivate: 'Privé', visibilityFriends: 'Amis seulement',
+      makePublic: '🌐 Rendre public', makePrivate: '🔒 Rendre privé', makeFriendsOnly: '👥 Amis seulement',
       editPost: '✏️', editSave: 'Sauvegarder', editCancel: 'Annuler',
       savedPlansCount: 'Plans sauvegardés', loadingText: 'Chargement...', notLoggedIn: 'Non connecté',
       noPlansText: 'Aucun plan sauvegardé.\nGénérez votre premier plan de voyage !',
@@ -1792,8 +1794,8 @@
       uploadLabelDest: 'الوجهة', uploading: 'جارٍ النشر...', uploadDone: '✅ تم النشر!',
       sharePhotoBtn: '📷 مشاركة صورة', confirmDeletePhoto: 'حذف هذا المنشور؟',
       tlPostBtn: 'نشر', tlComposePh: 'شارك تجربة سفرك... (حتى 300 حرف)',
-      visibilityPublic: 'عام', visibilityPrivate: 'خاص',
-      makePublic: '🌐 جعله عامًا', makePrivate: '🔒 جعله خاصًا',
+      visibilityPublic: 'عام', visibilityPrivate: 'خاص', visibilityFriends: 'الأصدقاء فقط',
+      makePublic: '🌐 جعله عامًا', makePrivate: '🔒 جعله خاصًا', makeFriendsOnly: '👥 الأصدقاء فقط',
       editPost: '✏️', editSave: 'حفظ', editCancel: 'إلغاء',
       savedPlansCount: 'خطط محفوظة', loadingText: 'جارٍ التحميل...', notLoggedIn: 'غير مسجّل الدخول',
       noPlansText: 'لا توجد خطط محفوظة بعد.\nأنشئ أول خطة سفر!',
@@ -1872,8 +1874,8 @@
       uploadLabelDest: 'গন্তব্য', uploading: 'পোস্ট হচ্ছে...', uploadDone: '✅ পোস্ট হয়েছে!',
       sharePhotoBtn: '📷 ছবি শেয়ার', confirmDeletePhoto: 'এই পোস্ট মুছবেন?',
       tlPostBtn: 'পোস্ট', tlComposePh: 'আপনার ভ্রমণ অভিজ্ঞতা শেয়ার করুন... (৩০০ অক্ষর পর্যন্ত)',
-      visibilityPublic: 'সর্বজনীন', visibilityPrivate: 'ব্যক্তিগত',
-      makePublic: '🌐 সর্বজনীন করুন', makePrivate: '🔒 ব্যক্তিগত করুন',
+      visibilityPublic: 'সর্বজনীন', visibilityPrivate: 'ব্যক্তিগত', visibilityFriends: 'শুধু বন্ধুরা',
+      makePublic: '🌐 সর্বজনীন করুন', makePrivate: '🔒 ব্যক্তিগত করুন', makeFriendsOnly: '👥 শুধু বন্ধুরা',
       editPost: '✏️', editSave: 'সংরক্ষণ', editCancel: 'বাতিল',
       savedPlansCount: 'সংরক্ষিত পরিকল্পনা', loadingText: 'লোড হচ্ছে...', notLoggedIn: 'লগ ইন নেই',
       noPlansText: 'এখনো কোনো সংরক্ষিত পরিকল্পনা নেই।\nআপনার প্রথম ভ্রমণ পরিকল্পনা তৈরি করুন!',
@@ -1952,8 +1954,8 @@
       uploadLabelDest: 'Направление', uploading: 'Публикация...', uploadDone: '✅ Опубликовано!',
       sharePhotoBtn: '📷 Поделиться фото', confirmDeletePhoto: 'Удалить эту публикацию?',
       tlPostBtn: 'Опубликовать', tlComposePh: 'Поделитесь впечатлениями... (до 300 символов)',
-      visibilityPublic: 'Публично', visibilityPrivate: 'Приватно',
-      makePublic: '🌐 Сделать публичным', makePrivate: '🔒 Сделать приватным',
+      visibilityPublic: 'Публично', visibilityPrivate: 'Приватно', visibilityFriends: 'Только друзья',
+      makePublic: '🌐 Сделать публичным', makePrivate: '🔒 Сделать приватным', makeFriendsOnly: '👥 Только друзья',
       editPost: '✏️', editSave: 'Сохранить', editCancel: 'Отмена',
       savedPlansCount: 'Сохранённые планы', loadingText: 'Загрузка...', notLoggedIn: 'Не выполнен вход',
       noPlansText: 'Сохранённых планов нет.\nСоздайте свой первый план поездки!',
@@ -2032,8 +2034,8 @@
       uploadLabelDest: 'Destino', uploading: 'A publicar...', uploadDone: '✅ Publicado!',
       sharePhotoBtn: '📷 Partilhar foto', confirmDeletePhoto: 'Eliminar esta publicação?',
       tlPostBtn: 'Publicar', tlComposePh: 'Partilhe a sua experiência de viagem... (até 300 caracteres)',
-      visibilityPublic: 'Público', visibilityPrivate: 'Privado',
-      makePublic: '🌐 Tornar público', makePrivate: '🔒 Tornar privado',
+      visibilityPublic: 'Público', visibilityPrivate: 'Privado', visibilityFriends: 'Apenas amigos',
+      makePublic: '🌐 Tornar público', makePrivate: '🔒 Tornar privado', makeFriendsOnly: '👥 Apenas amigos',
       editPost: '✏️', editSave: 'Guardar', editCancel: 'Cancelar',
       savedPlansCount: 'Planos guardados', loadingText: 'A carregar...', notLoggedIn: 'Não autenticado',
       noPlansText: 'Sem planos guardados.\nGere o seu primeiro plano de viagem!',
@@ -2112,8 +2114,8 @@
       uploadLabelDest: 'منزل', uploading: 'پوسٹ ہو رہا ہے...', uploadDone: '✅ پوسٹ ہو گیا!',
       sharePhotoBtn: '📷 تصویر شیئر کریں', confirmDeletePhoto: 'یہ پوسٹ حذف کریں؟',
       tlPostBtn: 'پوسٹ', tlComposePh: 'اپنا سفری تجربہ شیئر کریں... (۳۰۰ حروف تک)',
-      visibilityPublic: 'عوامی', visibilityPrivate: 'ذاتی',
-      makePublic: '🌐 عوامی بنائیں', makePrivate: '🔒 ذاتی بنائیں',
+      visibilityPublic: 'عوامی', visibilityPrivate: 'ذاتی', visibilityFriends: 'صرف دوست',
+      makePublic: '🌐 عوامی بنائیں', makePrivate: '🔒 ذاتی بنائیں', makeFriendsOnly: '👥 صرف دوست',
       editPost: '✏️', editSave: 'محفوظ', editCancel: 'منسوخ',
       savedPlansCount: 'محفوظ پلان', loadingText: 'لوڈ ہو رہا ہے...', notLoggedIn: 'لاگ ان نہیں',
       noPlansText: 'ابھی کوئی محفوظ پلان نہیں۔\nاپنا پہلا سفری پلان بنائیں!',
@@ -2192,8 +2194,8 @@
       uploadLabelDest: 'Tujuan', uploading: 'Memposting...', uploadDone: '✅ Diposting!',
       sharePhotoBtn: '📷 Bagikan Foto', confirmDeletePhoto: 'Hapus postingan ini?',
       tlPostBtn: 'Posting', tlComposePh: 'Bagikan pengalaman perjalanan Anda... (hingga 300 karakter)',
-      visibilityPublic: 'Publik', visibilityPrivate: 'Pribadi',
-      makePublic: '🌐 Jadikan Publik', makePrivate: '🔒 Jadikan Pribadi',
+      visibilityPublic: 'Publik', visibilityPrivate: 'Pribadi', visibilityFriends: 'Hanya Teman',
+      makePublic: '🌐 Jadikan Publik', makePrivate: '🔒 Jadikan Pribadi', makeFriendsOnly: '👥 Hanya Teman',
       editPost: '✏️', editSave: 'Simpan', editCancel: 'Batal',
       savedPlansCount: 'Rencana Tersimpan', loadingText: 'Memuat...', notLoggedIn: 'Belum masuk',
       noPlansText: 'Belum ada rencana tersimpan.\nBuat rencana perjalanan pertama Anda!',
@@ -2272,8 +2274,8 @@
       uploadLabelDest: 'Reiseziel', uploading: 'Wird gepostet...', uploadDone: '✅ Gepostet!',
       sharePhotoBtn: '📷 Foto teilen', confirmDeletePhoto: 'Diesen Beitrag löschen?',
       tlPostBtn: 'Posten', tlComposePh: 'Teilen Sie Ihr Reiseerlebnis... (bis 300 Zeichen)',
-      visibilityPublic: 'Öffentlich', visibilityPrivate: 'Privat',
-      makePublic: '🌐 Öffentlich machen', makePrivate: '🔒 Privat machen',
+      visibilityPublic: 'Öffentlich', visibilityPrivate: 'Privat', visibilityFriends: 'Nur Freunde',
+      makePublic: '🌐 Öffentlich machen', makePrivate: '🔒 Privat machen', makeFriendsOnly: '👥 Nur Freunde',
       editPost: '✏️', editSave: 'Speichern', editCancel: 'Abbrechen',
       savedPlansCount: 'Gespeicherte Pläne', loadingText: 'Lädt...', notLoggedIn: 'Nicht angemeldet',
       noPlansText: 'Noch keine gespeicherten Pläne.\nErstellen Sie Ihren ersten Reiseplan!',
@@ -2352,8 +2354,8 @@
       uploadLabelDest: 'Marudio', uploading: 'Inachapisha...', uploadDone: '✅ Imechapishwa!',
       sharePhotoBtn: '📷 Shiriki Picha', confirmDeletePhoto: 'Futa chapisho hili?',
       tlPostBtn: 'Chapisha', tlComposePh: 'Shiriki uzoefu wako wa safari... (hadi herufi 300)',
-      visibilityPublic: 'Hadharani', visibilityPrivate: 'Binafsi',
-      makePublic: '🌐 Fanya Hadharani', makePrivate: '🔒 Fanya Binafsi',
+      visibilityPublic: 'Hadharani', visibilityPrivate: 'Binafsi', visibilityFriends: 'Marafiki Tu',
+      makePublic: '🌐 Fanya Hadharani', makePrivate: '🔒 Fanya Binafsi', makeFriendsOnly: '👥 Marafiki Tu',
       editPost: '✏️', editSave: 'Hifadhi', editCancel: 'Ghairi',
       savedPlansCount: 'Mipango Iliyohifadhiwa', loadingText: 'Inapakia...', notLoggedIn: 'Haujaingia',
       noPlansText: 'Bado hakuna mipango iliyohifadhiwa.\nTengeneza mpango wako wa kwanza wa safari!',
@@ -2432,8 +2434,8 @@
       uploadLabelDest: 'गंतव्य', uploading: 'पोस्ट होत आहे...', uploadDone: '✅ पोस्ट झाले!',
       sharePhotoBtn: '📷 फोटो शेअर करा', confirmDeletePhoto: 'ही पोस्ट हटवायची?',
       tlPostBtn: 'पोस्ट', tlComposePh: 'तुमचा प्रवास अनुभव शेअर करा... (३०० वर्णांपर्यंत)',
-      visibilityPublic: 'सार्वजनिक', visibilityPrivate: 'खाजगी',
-      makePublic: '🌐 सार्वजनिक करा', makePrivate: '🔒 खाजगी करा',
+      visibilityPublic: 'सार्वजनिक', visibilityPrivate: 'खाजगी', visibilityFriends: 'केवळ मित्र',
+      makePublic: '🌐 सार्वजनिक करा', makePrivate: '🔒 खाजगी करा', makeFriendsOnly: '👥 केवळ मित्र',
       editPost: '✏️', editSave: 'जतन करा', editCancel: 'रद्द करा',
       savedPlansCount: 'जतन केलेल्या योजना', loadingText: 'लोड होत आहे...', notLoggedIn: 'लॉग इन नाही',
       noPlansText: 'अजून कोणत्याही जतन केलेल्या योजना नाहीत.\nपहिली प्रवास योजना तयार करा!',
@@ -2512,8 +2514,8 @@
       uploadLabelDest: 'గమ్యం', uploading: 'పోస్ట్ అవుతోంది...', uploadDone: '✅ పోస్ట్ అయింది!',
       sharePhotoBtn: '📷 ఫోటో షేర్', confirmDeletePhoto: 'ఈ పోస్ట్ డిలీట్ చేయాలా?',
       tlPostBtn: 'పోస్ట్', tlComposePh: 'మీ ట్రావెల్ అనుభవం షేర్ చేయండి... (300 అక్షరాల వరకు)',
-      visibilityPublic: 'పబ్లిక్', visibilityPrivate: 'ప్రైవేట్',
-      makePublic: '🌐 పబ్లిక్ చేయండి', makePrivate: '🔒 ప్రైవేట్ చేయండి',
+      visibilityPublic: 'పబ్లిక్', visibilityPrivate: 'ప్రైవేట్', visibilityFriends: 'స్నేహితులు మాత్రమే',
+      makePublic: '🌐 పబ్లిక్ చేయండి', makePrivate: '🔒 ప్రైవేట్ చేయండి', makeFriendsOnly: '👥 స్నేహితులు మాత్రమే',
       editPost: '✏️', editSave: 'సేవ్', editCancel: 'రద్దు',
       savedPlansCount: 'సేవ్ చేసిన ప్లాన్‌లు', loadingText: 'లోడ్ అవుతోంది...', notLoggedIn: 'లాగిన్ కాలేదు',
       noPlansText: 'ఇంకా సేవ్ చేసిన ప్లాన్‌లు లేవు.\nమీ మొదటి ట్రావెల్ ప్లాన్ క్రియేట్ చేయండి!',
@@ -2592,8 +2594,8 @@
       uploadLabelDest: 'Hedef', uploading: 'Yayınlanıyor...', uploadDone: '✅ Yayınlandı!',
       sharePhotoBtn: '📷 Fotoğraf Paylaş', confirmDeletePhoto: 'Bu gönderiyi sil?',
       tlPostBtn: 'Paylaş', tlComposePh: 'Seyahat deneyiminizi paylaşın... (300 karaktere kadar)',
-      visibilityPublic: 'Herkese Açık', visibilityPrivate: 'Özel',
-      makePublic: '🌐 Herkese Açık Yap', makePrivate: '🔒 Özel Yap',
+      visibilityPublic: 'Herkese Açık', visibilityPrivate: 'Özel', visibilityFriends: 'Yalnızca Arkadaşlar',
+      makePublic: '🌐 Herkese Açık Yap', makePrivate: '🔒 Özel Yap', makeFriendsOnly: '👥 Yalnızca Arkadaşlar',
       editPost: '✏️', editSave: 'Kaydet', editCancel: 'İptal',
       savedPlansCount: 'Kayıtlı Planlar', loadingText: 'Yükleniyor...', notLoggedIn: 'Giriş yapılmadı',
       noPlansText: 'Henüz kayıtlı plan yok.\nİlk seyahat planınızı oluşturun!',
@@ -2672,8 +2674,8 @@
       uploadLabelDest: 'இலக்கு', uploading: 'பதிவிடுகிறது...', uploadDone: '✅ பதிவிடப்பட்டது!',
       sharePhotoBtn: '📷 புகைப்படம் பகிர்', confirmDeletePhoto: 'இந்த பதிவை நீக்கவா?',
       tlPostBtn: 'பதிவிடு', tlComposePh: 'பயண அனுபவம் பகிருங்கள்... (300 எழுத்துகள் வரை)',
-      visibilityPublic: 'பொது', visibilityPrivate: 'தனிப்பட்ட',
-      makePublic: '🌐 பொது ஆக்கு', makePrivate: '🔒 தனிப்பட்டதாக ஆக்கு',
+      visibilityPublic: 'பொது', visibilityPrivate: 'தனிப்பட்ட', visibilityFriends: 'நண்பர்கள் மட்டும்',
+      makePublic: '🌐 பொது ஆக்கு', makePrivate: '🔒 தனிப்பட்டதாக ஆக்கு', makeFriendsOnly: '👥 நண்பர்கள் மட்டும்',
       editPost: '✏️', editSave: 'சேமி', editCancel: 'ரத்து',
       savedPlansCount: 'சேமிக்கப்பட்ட திட்டங்கள்', loadingText: 'ஏற்றுகிறது...', notLoggedIn: 'உள்நுழையவில்லை',
       noPlansText: 'இன்னும் சேமிக்கப்பட்ட திட்டங்கள் இல்லை.\nமுதல் பயண திட்டத்தை உருவாக்குங்கள்!',
@@ -2752,8 +2754,8 @@
       uploadLabelDest: '여행지', uploading: '게시 중...', uploadDone: '✅ 게시됨!',
       sharePhotoBtn: '📷 사진 공유', confirmDeletePhoto: '이 게시물을 삭제할까요?',
       tlPostBtn: '게시', tlComposePh: '여행 경험을 공유하세요... (최대 300자)',
-      visibilityPublic: '공개', visibilityPrivate: '비공개',
-      makePublic: '🌐 공개로 설정', makePrivate: '🔒 비공개로 설정',
+      visibilityPublic: '공개', visibilityPrivate: '비공개', visibilityFriends: '친구만',
+      makePublic: '🌐 공개로 설정', makePrivate: '🔒 비공개로 설정', makeFriendsOnly: '👥 친구만',
       editPost: '✏️', editSave: '저장', editCancel: '취소',
       savedPlansCount: '저장된 계획', loadingText: '불러오는 중...', notLoggedIn: '로그인되지 않음',
       noPlansText: '저장된 계획이 없습니다.\n첫 번째 여행 계획을 만들어 보세요!',
@@ -2832,8 +2834,8 @@
       uploadLabelDest: 'Điểm đến', uploading: 'Đang đăng...', uploadDone: '✅ Đã đăng!',
       sharePhotoBtn: '📷 Chia sẻ ảnh', confirmDeletePhoto: 'Xóa bài đăng này?',
       tlPostBtn: 'Đăng', tlComposePh: 'Chia sẻ trải nghiệm du lịch của bạn... (tối đa 300 ký tự)',
-      visibilityPublic: 'Công khai', visibilityPrivate: 'Riêng tư',
-      makePublic: '🌐 Đặt công khai', makePrivate: '🔒 Đặt riêng tư',
+      visibilityPublic: 'Công khai', visibilityPrivate: 'Riêng tư', visibilityFriends: 'Chỉ bạn bè',
+      makePublic: '🌐 Đặt công khai', makePrivate: '🔒 Đặt riêng tư', makeFriendsOnly: '👥 Chỉ bạn bè',
       editPost: '✏️', editSave: 'Lưu', editCancel: 'Hủy',
       savedPlansCount: 'Kế hoạch đã lưu', loadingText: 'Đang tải...', notLoggedIn: 'Chưa đăng nhập',
       noPlansText: 'Chưa có kế hoạch nào được lưu.\nHãy tạo kế hoạch du lịch đầu tiên!',
@@ -2912,8 +2914,8 @@
       uploadLabelDest: 'Destinasyon', uploading: 'Nipo-post...', uploadDone: '✅ Na-post!',
       sharePhotoBtn: '📷 Ibahagi ang Larawan', confirmDeletePhoto: 'Tanggalin ang post na ito?',
       tlPostBtn: 'I-post', tlComposePh: 'Ibahagi ang iyong karanasan sa biyahe... (hanggang 300 karakter)',
-      visibilityPublic: 'Pampubliko', visibilityPrivate: 'Pribado',
-      makePublic: '🌐 Gawing Pampubliko', makePrivate: '🔒 Gawing Pribado',
+      visibilityPublic: 'Pampubliko', visibilityPrivate: 'Pribado', visibilityFriends: 'Mga Kaibigan Lamang',
+      makePublic: '🌐 Gawing Pampubliko', makePrivate: '🔒 Gawing Pribado', makeFriendsOnly: '👥 Mga Kaibigan Lamang',
       editPost: '✏️', editSave: 'I-save', editCancel: 'Kanselahin',
       savedPlansCount: 'Mga Na-save na Plano', loadingText: 'Naglo-load...', notLoggedIn: 'Hindi naka-sign in',
       noPlansText: 'Wala pang mga na-save na plano.\nGumawa ng iyong unang plano sa biyahe!',
@@ -4317,15 +4319,20 @@
   }
 
   function toggleVisibility() {
-    _composeVisibility = _composeVisibility === 'public' ? 'private' : 'public';
+    const order = ['public', 'friends', 'private'];
+    _composeVisibility = order[(order.indexOf(_composeVisibility) + 1) % 3];
     const btn = document.getElementById('tlVisibilityBtn');
     const label = document.getElementById('tlVisibilityLabel');
+    btn.classList.remove('private', 'friends');
     if (_composeVisibility === 'private') {
       btn.classList.add('private');
       btn.firstChild.textContent = '🔒 ';
       label.textContent = t('visibilityPrivate');
+    } else if (_composeVisibility === 'friends') {
+      btn.classList.add('friends');
+      btn.firstChild.textContent = '👥 ';
+      label.textContent = t('visibilityFriends');
     } else {
-      btn.classList.remove('private');
       btn.firstChild.textContent = '🌐 ';
       label.textContent = t('visibilityPublic');
     }
@@ -4454,8 +4461,10 @@
     const editBtn = isOwn
       ? `<button class="tl-edit-btn" onclick="openEditPost('${p.id}')" title="Edit">${t('editPost')}</button>`
       : '';
-    const privateBadge = (p.visibility === 'private')
+    const privateBadge = p.visibility === 'private'
       ? `<span class="tl-private-badge">🔒 ${t('visibilityPrivate')}</span>`
+      : p.visibility === 'friends'
+      ? `<span class="tl-friends-badge">👥 ${t('visibilityFriends')}</span>`
       : '';
 
     // Friend button (only for other users when logged in)
@@ -4482,10 +4491,11 @@
       ? `<button class="tl-like-btn${liked ? ' liked' : ''}" id="like-${p.id}" onclick="toggleLike('${p.id}')"><span class="heart">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount > 0 ? likeCount : ''}</span></button>`
       : (likeCount > 0 ? `<span style="color:#f43f5e;font-size:0.88rem;">❤️ ${likeCount}</span>` : '');
 
-    // Visibility toggle (own posts only)
-    const isPrivate = p.visibility === 'private';
+    // Visibility toggle (own posts only) — cycles: public → friends → private → public
+    const _nextVis = p.visibility === 'public' ? 'friends' : p.visibility === 'friends' ? 'private' : 'public';
+    const _visBtnText = p.visibility === 'public' ? t('makeFriendsOnly') : p.visibility === 'friends' ? t('makePrivate') : t('makePublic');
     const visToggle = isOwn
-      ? `<button class="tl-vis-toggle${isPrivate ? ' private' : ''}" id="vistoggle-${p.id}" onclick="togglePostVisibility('${p.id}', '${isPrivate ? 'public' : 'private'}')">${isPrivate ? t('makePublic') : t('makePrivate')}</button>`
+      ? `<button class="tl-vis-toggle${p.visibility === 'private' ? ' private' : p.visibility === 'friends' ? ' friends' : ''}" id="vistoggle-${p.id}" onclick="togglePostVisibility('${p.id}', '${_nextVis}')">${_visBtnText}</button>`
       : '';
 
     return `
@@ -4586,25 +4596,29 @@
       // Update in-memory post
       const post = _timelinePosts.find(p => p.id === photoId);
       if (post) post.visibility = newVisibility;
-      // Update button in-place to avoid full re-render destroying DOM
+      // Update button in-place — cycles: public → friends → private → public
+      const nextVis = newVisibility === 'public' ? 'friends' : newVisibility === 'friends' ? 'private' : 'public';
+      const visBtnText = newVisibility === 'public' ? t('makeFriendsOnly') : newVisibility === 'friends' ? t('makePrivate') : t('makePublic');
       if (btn) {
-        btn.className = `tl-vis-toggle${newVisibility === 'private' ? ' private' : ''}`;
-        btn.textContent = newVisibility === 'private' ? t('makePublic') : t('makePrivate');
-        btn.setAttribute('onclick', `togglePostVisibility('${photoId}', '${newVisibility === 'private' ? 'public' : 'private'}')`);
+        btn.className = `tl-vis-toggle${newVisibility === 'private' ? ' private' : newVisibility === 'friends' ? ' friends' : ''}`;
+        btn.textContent = visBtnText;
+        btn.setAttribute('onclick', `togglePostVisibility('${photoId}', '${nextVis}')`);
       }
-      // Update private badge
+      // Update visibility badge
       const postEl = document.getElementById(`tlpost-${photoId}`);
       if (postEl) {
-        const existing = postEl.querySelector('.tl-private-badge');
+        postEl.querySelector('.tl-private-badge')?.remove();
+        postEl.querySelector('.tl-friends-badge')?.remove();
         if (newVisibility === 'private') {
-          if (!existing) {
-            const badge = document.createElement('span');
-            badge.className = 'tl-private-badge';
-            badge.textContent = `🔒 ${t('visibilityPrivate')}`;
-            postEl.querySelector('.tl-dest')?.after(badge);
-          }
-        } else {
-          existing?.remove();
+          const badge = document.createElement('span');
+          badge.className = 'tl-private-badge';
+          badge.textContent = `🔒 ${t('visibilityPrivate')}`;
+          postEl.querySelector('.tl-dest')?.after(badge);
+        } else if (newVisibility === 'friends') {
+          const badge = document.createElement('span');
+          badge.className = 'tl-friends-badge';
+          badge.textContent = `👥 ${t('visibilityFriends')}`;
+          postEl.querySelector('.tl-dest')?.after(badge);
         }
       }
     } finally {
@@ -4714,7 +4728,14 @@
       document.getElementById('tlCharCount').textContent = '300';
       removeComposePhoto();
       // Reset visibility to public
-      if (_composeVisibility === 'private') toggleVisibility();
+      if (_composeVisibility !== 'public') {
+        _composeVisibility = 'public';
+        const vBtn = document.getElementById('tlVisibilityBtn');
+        const vLabel = document.getElementById('tlVisibilityLabel');
+        vBtn.classList.remove('private', 'friends');
+        vBtn.firstChild.textContent = '🌐 ';
+        vLabel.textContent = t('visibilityPublic');
+      }
       btn.disabled = false;
       btn.textContent = t('tlPostBtn');
       // Prepend new post

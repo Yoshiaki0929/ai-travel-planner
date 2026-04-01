@@ -359,7 +359,7 @@ async def upload_photo(
                 "destination": destination.strip(),
                 "caption": caption.strip()[:300],
                 "image_url": image_url,
-                "visibility": visibility if visibility in ("public", "private") else "public",
+                "visibility": visibility if visibility in ("public", "private", "friends") else "public",
             },
         )
     if db_resp.status_code not in (200, 201):
@@ -385,16 +385,36 @@ async def get_timeline(limit: int = 20, offset: int = 0, user_id: str = "", auth
     # Show private posts only when viewing own profile
     is_own_profile = user_id and caller_id and user_id == caller_id
     if is_own_profile:
-        visibility_filter = ""  # show all (public + private)
-    else:
+        visibility_filter = ""  # show all (public + private + friends)
+    elif not caller_id:
         visibility_filter = "&visibility=eq.public"
+    else:
+        # Authenticated user: fetch public + friends posts, filter in Python
+        visibility_filter = "&visibility=in.(public,friends)"
 
     async with httpx.AsyncClient() as client:
         resp = await client.get(
             f"{supabase_url}/rest/v1/photos?order=created_at.desc&limit={min(limit, 50)}&offset={offset}{user_filter}{visibility_filter}",
             headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"},
         )
-    return resp.json() if resp.status_code == 200 else []
+    posts = resp.json() if resp.status_code == 200 else []
+
+    # Filter friends-only posts: keep only if author is an accepted friend (or self)
+    if caller_id and not is_own_profile:
+        friendships = await _get_all_friendships(caller_id, supabase_url, supabase_key)
+        friend_ids = set()
+        for r in friendships:
+            if r.get("status") == "accepted":
+                other = r["addressee_id"] if r["requester_id"] == caller_id else r["requester_id"]
+                friend_ids.add(other)
+        posts = [
+            p for p in posts
+            if p.get("visibility") == "public"
+            or p.get("user_id") == caller_id
+            or (p.get("visibility") == "friends" and p.get("user_id") in friend_ids)
+        ]
+
+    return posts
 
 
 @app.get("/api/photos/my-likes")
@@ -511,7 +531,7 @@ async def update_visibility(photo_id: str, request: Request, authorization: str 
 
     body = await request.json()
     visibility = body.get("visibility")
-    if visibility not in ("public", "private"):
+    if visibility not in ("public", "private", "friends"):
         return JSONResponse(status_code=400, content={"error": "Invalid visibility"})
 
     supabase_url = os.environ.get("SUPABASE_URL", "")
