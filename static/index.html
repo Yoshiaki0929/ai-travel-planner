@@ -3816,9 +3816,11 @@
         if (session?.user) {
           currentUser = session.user;
           renderUserMenu(session.user);
+          _initGlobalCallChannel();
         } else {
           currentUser = null;
           renderLoginBtn();
+          if (_globalCallChannel) { _globalCallChannel.unsubscribe(); _globalCallChannel = null; }
         }
       });
 
@@ -3827,6 +3829,7 @@
       if (session?.user) {
         currentUser = session.user;
         renderUserMenu(session.user);
+        _initGlobalCallChannel();
       }
     } catch (e) { console.warn('Auth init failed', e); }
 
@@ -4955,6 +4958,7 @@
   let _callType = null;    // 'voice'|'video'
   let _callPeer = null;    // { user_id, name, avatar_url }
   let _callRoomId = null;
+  let _callCallerId = null; // caller's userId stored on callee side for responses
   let _rtcPeer = null;
   let _localStream = null;
   let _callTimerInterval = null;
@@ -4962,6 +4966,7 @@
   let _callTimeoutHandle = null;
   let _isMuted = false;
   let _isCameraOff = false;
+  let _globalCallChannel = null; // persistent channel subscribed at login
   const RTC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
 
   async function showChat() {
@@ -5084,7 +5089,7 @@
     }).then(r => r.json()).catch(() => []);
     renderMessages(Array.isArray(msgs) ? msgs : []);
 
-    // Subscribe to realtime (messages + call signaling)
+    // Subscribe to realtime (messages only — call signaling uses _globalCallChannel)
     unsubscribeChat();
     _chatChannel = supabaseClient
       .channel(`room:${roomId}`)
@@ -5095,14 +5100,6 @@
         appendMessage(payload.new);
         scrollChatBottom(true);
       })
-      .on('broadcast', { event: 'call-invite'  }, msg => _onCallInvite(msg.payload))
-      .on('broadcast', { event: 'call-accept'  }, msg => _onCallAccept(msg.payload))
-      .on('broadcast', { event: 'call-decline' }, msg => _onCallDecline(msg.payload))
-      .on('broadcast', { event: 'call-cancel'  }, msg => _onCallCancel(msg.payload))
-      .on('broadcast', { event: 'call-end'     }, msg => _onCallEnd(msg.payload))
-      .on('broadcast', { event: 'call-offer'   }, msg => _onCallOffer(msg.payload))
-      .on('broadcast', { event: 'call-answer'  }, msg => _onCallAnswer(msg.payload))
-      .on('broadcast', { event: 'call-ice'     }, msg => _onCallIce(msg.payload))
       .subscribe();
 
     // Show/hide call buttons based on room type
@@ -5245,6 +5242,28 @@
 
   // ===== VOICE / VIDEO CALL (WebRTC + Supabase Broadcast) =====
 
+  // Subscribe a persistent global call channel at login so incoming calls
+  // are received regardless of which page the user is on.
+  function _initGlobalCallChannel() {
+    if (_globalCallChannel) return;
+    _globalCallChannel = supabaseClient
+      .channel('global_calls')
+      .on('broadcast', { event: 'call-invite'  }, msg => _onCallInvite(msg.payload))
+      .on('broadcast', { event: 'call-accept'  }, msg => _onCallAccept(msg.payload))
+      .on('broadcast', { event: 'call-decline' }, msg => _onCallDecline(msg.payload))
+      .on('broadcast', { event: 'call-cancel'  }, msg => _onCallCancel(msg.payload))
+      .on('broadcast', { event: 'call-end'     }, msg => _onCallEnd(msg.payload))
+      .on('broadcast', { event: 'call-offer'   }, msg => _onCallOffer(msg.payload))
+      .on('broadcast', { event: 'call-answer'  }, msg => _onCallAnswer(msg.payload))
+      .on('broadcast', { event: 'call-ice'     }, msg => _onCallIce(msg.payload))
+      .subscribe();
+  }
+
+  // Send a call signaling event to the target user via the global channel.
+  function _sendCallSignal(event, payload) {
+    if (_globalCallChannel) _globalCallChannel.send({ type: 'broadcast', event, payload });
+  }
+
   async function _fetchDmPeer(roomId) {
     try {
       const { data: { session } } = await supabaseClient.auth.getSession();
@@ -5259,7 +5278,7 @@
 
   async function startCall(type) {
     if (_callState !== 'idle') return;
-    if (!_chatChannel) return;
+    if (!_globalCallChannel) return;
     const room = _chatRooms.find(r => r.id === _callRoomId);
     if (!room || room.type !== 'dm') return;
     if (!_callPeer) {
@@ -5283,16 +5302,17 @@
     }
     _showCallOverlay(t('callCalling'));
     const selfName = currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'Me';
-    _chatChannel.send({
-      type: 'broadcast', event: 'call-invite',
-      payload: { callType: type, callerId: currentUser.id, callerName: selfName, callerAvatar: currentUser?.user_metadata?.avatar_url || '', roomId: _callRoomId }
+    _sendCallSignal('call-invite', {
+      targetId: _callPeer.user_id,
+      callType: type, callerId: currentUser.id, callerName: selfName,
+      callerAvatar: currentUser?.user_metadata?.avatar_url || '', roomId: _callRoomId
     });
     _callTimeoutHandle = setTimeout(_callerTimeout, 30000);
   }
 
   function _callerTimeout() {
     if (_callState !== 'calling') return;
-    if (_chatChannel) _chatChannel.send({ type: 'broadcast', event: 'call-cancel', payload: { callerId: currentUser.id, roomId: _callRoomId } });
+    if (_callPeer) _sendCallSignal('call-cancel', { targetId: _callPeer.user_id, callerId: currentUser.id, roomId: _callRoomId });
     document.getElementById('callOverlayStatus').textContent = t('callNoAnswer');
     setTimeout(() => _teardownCall(false), 2000);
   }
@@ -5300,24 +5320,21 @@
   async function acceptCall() {
     document.getElementById('callIncomingBanner').style.display = 'none';
     _callState = 'connecting';
-    if (_callRoomId && _callRoomId !== _currentRoomId) {
-      const room = _chatRooms.find(r => r.id === _callRoomId);
-      if (room) await openRoom(_callRoomId, room.display_name || room.name || t('chatDM'));
-    }
-    if (_chatChannel) _chatChannel.send({ type: 'broadcast', event: 'call-accept', payload: { calleeId: currentUser.id, roomId: _callRoomId } });
+    _sendCallSignal('call-accept', { targetId: _callCallerId, calleeId: currentUser.id, roomId: _callRoomId });
     _showCallOverlay(t('callConnecting'));
     await _setupWebRTC(false);
   }
 
   function declineCall() {
     document.getElementById('callIncomingBanner').style.display = 'none';
-    if (_chatChannel) _chatChannel.send({ type: 'broadcast', event: 'call-decline', payload: { calleeId: currentUser.id, roomId: _callRoomId } });
+    _sendCallSignal('call-decline', { targetId: _callCallerId, calleeId: currentUser.id, roomId: _callRoomId });
     _callState = 'idle';
     _callType = null;
+    _callCallerId = null;
   }
 
   function endCall() {
-    if (_chatChannel) _chatChannel.send({ type: 'broadcast', event: 'call-end', payload: { userId: currentUser.id, roomId: _callRoomId } });
+    if (_callPeer) _sendCallSignal('call-end', { targetId: _callPeer.user_id, userId: currentUser.id, roomId: _callRoomId });
     _teardownCall(false);
   }
 
@@ -5326,8 +5343,8 @@
     _localStream.getTracks().forEach(track => _rtcPeer.addTrack(track, _localStream));
 
     _rtcPeer.onicecandidate = e => {
-      if (e.candidate && _chatChannel) {
-        _chatChannel.send({ type: 'broadcast', event: 'call-ice', payload: { candidate: e.candidate.toJSON(), fromId: currentUser.id, roomId: _callRoomId } });
+      if (e.candidate && _callPeer) {
+        _sendCallSignal('call-ice', { targetId: _callPeer.user_id, candidate: e.candidate.toJSON(), fromId: currentUser.id, roomId: _callRoomId });
       }
     };
 
@@ -5336,7 +5353,6 @@
         const vid = document.getElementById('callRemoteVideo');
         if (vid) vid.srcObject = e.streams[0];
       } else {
-        // audio-only: play via Audio element
         const audio = new Audio();
         audio.srcObject = e.streams[0];
         audio.autoplay = true;
@@ -5358,7 +5374,7 @@
     if (isInitiator) {
       const offer = await _rtcPeer.createOffer();
       await _rtcPeer.setLocalDescription(offer);
-      if (_chatChannel) _chatChannel.send({ type: 'broadcast', event: 'call-offer', payload: { sdp: offer, callerId: currentUser.id, roomId: _callRoomId } });
+      if (_callPeer) _sendCallSignal('call-offer', { targetId: _callPeer.user_id, sdp: offer, callerId: currentUser.id, roomId: _callRoomId });
     }
   }
 
@@ -5436,16 +5452,18 @@
   // ── Broadcast event handlers ──
 
   function _onCallInvite(payload) {
-    if (!payload || payload.callerId === currentUser?.id) return;
+    if (!payload) return;
+    if (payload.targetId !== currentUser?.id) return; // not for me
+    if (payload.callerId === currentUser?.id) return;  // echo guard
     if (_callState !== 'idle') {
-      // Auto-decline: already in a call
-      if (_chatChannel) _chatChannel.send({ type: 'broadcast', event: 'call-decline', payload: { calleeId: currentUser.id, roomId: payload.roomId } });
+      _sendCallSignal('call-decline', { targetId: payload.callerId, calleeId: currentUser.id, roomId: payload.roomId });
       return;
     }
     _callState = 'incoming';
     _callType = payload.callType;
     _callPeer = { user_id: payload.callerId, name: payload.callerName, avatar_url: payload.callerAvatar };
     _callRoomId = payload.roomId;
+    _callCallerId = payload.callerId;
     const avatarEl = document.getElementById('callBannerAvatar');
     avatarEl.innerHTML = payload.callerAvatar
       ? `<img src="${escHtml(payload.callerAvatar)}" alt="">`
@@ -5456,50 +5474,65 @@
   }
 
   async function _onCallAccept(payload) {
-    if (!payload || payload.calleeId === currentUser?.id) return;
+    if (!payload) return;
+    if (payload.targetId !== currentUser?.id) return;
+    if (payload.calleeId === currentUser?.id) return;
     if (_callState !== 'calling') return;
     if (_callTimeoutHandle) { clearTimeout(_callTimeoutHandle); _callTimeoutHandle = null; }
+    _callPeer = _callPeer || { user_id: payload.calleeId, name: '', avatar_url: '' };
     _callState = 'connecting';
     document.getElementById('callOverlayStatus').textContent = t('callConnecting');
     await _setupWebRTC(true);
   }
 
   function _onCallDecline(payload) {
-    if (!payload || payload.calleeId === currentUser?.id) return;
+    if (!payload) return;
+    if (payload.targetId !== currentUser?.id) return;
+    if (payload.calleeId === currentUser?.id) return;
     if (_callState !== 'calling') return;
     document.getElementById('callOverlayStatus').textContent = t('callDeclined');
     setTimeout(() => _teardownCall(false), 2000);
   }
 
   function _onCallCancel(payload) {
-    if (!payload || payload.callerId === currentUser?.id) return;
+    if (!payload) return;
+    if (payload.targetId !== currentUser?.id) return;
+    if (payload.callerId === currentUser?.id) return;
     if (_callState !== 'incoming') return;
     document.getElementById('callIncomingBanner').style.display = 'none';
-    _callState = 'idle'; _callType = null;
+    _callState = 'idle'; _callType = null; _callCallerId = null;
   }
 
   function _onCallEnd(payload) {
-    if (!payload || payload.userId === currentUser?.id) return;
+    if (!payload) return;
+    if (payload.targetId !== currentUser?.id) return;
+    if (payload.userId === currentUser?.id) return;
     _teardownCall(false);
   }
 
   async function _onCallOffer(payload) {
-    if (!payload || payload.callerId === currentUser?.id) return;
+    if (!payload) return;
+    if (payload.targetId !== currentUser?.id) return;
+    if (payload.callerId === currentUser?.id) return;
     if (_callState !== 'connecting' || !_rtcPeer) return;
     await _rtcPeer.setRemoteDescription(new RTCSessionDescription(payload.sdp));
     const answer = await _rtcPeer.createAnswer();
     await _rtcPeer.setLocalDescription(answer);
-    if (_chatChannel) _chatChannel.send({ type: 'broadcast', event: 'call-answer', payload: { sdp: answer, calleeId: currentUser.id, roomId: _callRoomId } });
+    _sendCallSignal('call-answer', { targetId: payload.callerId, sdp: answer, calleeId: currentUser.id, roomId: _callRoomId });
   }
 
   async function _onCallAnswer(payload) {
-    if (!payload || payload.calleeId === currentUser?.id) return;
+    if (!payload) return;
+    if (payload.targetId !== currentUser?.id) return;
+    if (payload.calleeId === currentUser?.id) return;
     if (!_rtcPeer) return;
     await _rtcPeer.setRemoteDescription(new RTCSessionDescription(payload.sdp));
   }
 
   async function _onCallIce(payload) {
-    if (!payload || payload.fromId === currentUser?.id) return;
+    if (!payload) return;
+    if (payload.targetId !== currentUser?.id) return;
+    if (payload.fromId === currentUser?.id) return;
     if (!_rtcPeer) return;
     try { await _rtcPeer.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch {}
   }
