@@ -86,6 +86,7 @@ class PlanController extends Controller
         $body = $request->json()->all();
 
         $destination = mb_substr(trim(strip_tags($body['destination'] ?? '')), 0, 200);
+        $departure   = mb_substr(trim(strip_tags($body['departure_location'] ?? '')), 0, 200);
         $planContent = $body['plan_content'] ?? '';
 
         if (!$destination) {
@@ -96,11 +97,12 @@ class PlanController extends Controller
         }
 
         $row = $this->supabase->insert('saved_plans', [
-            'user_id'      => $user['id'],
-            'destination'  => $destination,
-            'duration_days'=> max(1, min(60, (int) ($body['duration_days'] ?? 1))),
-            'budget_jpy'   => max(0, (int) ($body['budget_jpy'] ?? 0)),
-            'plan_content' => $planContent,
+            'user_id'           => $user['id'],
+            'departure_location'=> $departure ?: null,
+            'destination'       => $destination,
+            'duration_days'     => max(1, min(60, (int) ($body['duration_days'] ?? 1))),
+            'budget_jpy'        => max(0, (int) ($body['budget_jpy'] ?? 0)),
+            'plan_content'      => $planContent,
         ]);
 
         if (!$row) {
@@ -141,6 +143,7 @@ class PlanController extends Controller
 
     private function buildMessage(array $d): string
     {
+        $departure = mb_substr(trim(strip_tags($d['departure_location'] ?? '')), 0, 200);
         $dest   = mb_substr(trim(strip_tags($d['destination'] ?? '')), 0, 200);
         $days   = max(1, min(60, (int) ($d['duration_days'] ?? 1)));
         $budget = number_format(max(0, (int) ($d['budget_jpy'] ?? 0)));
@@ -149,10 +152,12 @@ class PlanController extends Controller
         $style  = mb_substr(trim(strip_tags($d['travel_style'] ?? 'バランス型')), 0, 100);
         $extra  = mb_substr(trim(strip_tags($d['additional_requests'] ?? '')), 0, 500) ?: 'なし';
 
+        $departureLine = $departure ? "【出発地】{$departure}\n" : '';
+
         return <<<MSG
 以下の条件で旅行プランを作成してください：
 
-【旅行先】{$dest}
+{$departureLine}【旅行先】{$dest}
 【旅行期間】{$days}日間
 【予算】{$budget}円（{$people}人）
 【人数】{$people}人

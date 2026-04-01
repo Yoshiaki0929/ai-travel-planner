@@ -33,6 +33,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 class TravelRequest(BaseModel):
+    departure_location: str = ""
     destination: str
     duration_days: int
     budget_jpy: int
@@ -70,10 +71,11 @@ async def create_plan(travel_request: TravelRequest):
     if validation_error:
         return JSONResponse(status_code=400, content={"error": validation_error})
 
+    departure_line = f"【出発地】{travel_request.departure_location}\n" if travel_request.departure_location.strip() else ""
     user_message = f"""
 以下の条件で旅行プランを作成してください：
 
-【旅行先】{travel_request.destination}
+{departure_line}【旅行先】{travel_request.destination}
 【旅行期間】{travel_request.duration_days}日間
 【予算】{travel_request.budget_jpy:,}円（{travel_request.num_people}人）
 【人数】{travel_request.num_people}人
@@ -100,10 +102,11 @@ async def create_plan_stream(travel_request: TravelRequest):
     if validation_error:
         return JSONResponse(status_code=400, content={"error": validation_error})
 
+    departure_line = f"【出発地】{travel_request.departure_location}\n" if travel_request.departure_location.strip() else ""
     user_message = f"""
 以下の条件で旅行プランを作成してください：
 
-【旅行先】{travel_request.destination}
+{departure_line}【旅行先】{travel_request.destination}
 【旅行期間】{travel_request.duration_days}日間
 【予算】{travel_request.budget_jpy:,}円（{travel_request.num_people}人）
 【人数】{travel_request.num_people}人
