@@ -794,8 +794,17 @@
           <div class="budget-row">
             <input type="number" id="budget_amount" min="1" step="100" value="2000" required />
             <select id="budget_currency" class="currency-select" onchange="onCurrencyChange()">
-              <option value="USD">USD</option>
-              <option value="JPY">JPY</option>
+              <option value="USD">🇺🇸 USD</option>
+              <option value="EUR">🇪🇺 EUR</option>
+              <option value="JPY" selected>🇯🇵 JPY</option>
+              <option value="GBP">🇬🇧 GBP</option>
+              <option value="CNY">🇨🇳 CNY</option>
+              <option value="AUD">🇦🇺 AUD</option>
+              <option value="CAD">🇨🇦 CAD</option>
+              <option value="CHF">🇨🇭 CHF</option>
+              <option value="HKD">🇭🇰 HKD</option>
+              <option value="SGD">🇸🇬 SGD</option>
+              <option value="KRW">🇰🇷 KRW</option>
             </select>
           </div>
         </div>
@@ -3077,15 +3086,20 @@
     });
   }
 
+  // Approximate JPY conversion rates (for budget validation / plan generation)
+  const _toJPY = { USD:150, EUR:165, JPY:1, GBP:190, CNY:21, AUD:98, CAD:110, CHF:170, HKD:19, SGD:112, KRW:0.11 };
+
   function onCurrencyChange() { updateBudgetStep(); }
   function updateBudgetStep() {
     const c = document.getElementById('budget_currency').value;
     const i = document.getElementById('budget_amount');
-    if (c === 'JPY') { i.step = 10000; i.min = 10000; } else { i.step = 100; i.min = 1; }
+    if (c === 'JPY' || c === 'KRW') { i.step = 10000; i.min = 10000; }
+    else { i.step = 100; i.min = 100; }
   }
   function getBudgetInJPY() {
     const a = parseInt(document.getElementById('budget_amount').value) || 0;
-    return document.getElementById('budget_currency').value === 'USD' ? a * 150 : a;
+    const c = document.getElementById('budget_currency').value;
+    return Math.round(a * (_toJPY[c] ?? 1));
   }
   function toggleInterest(label) {
     label.classList.toggle('checked');
