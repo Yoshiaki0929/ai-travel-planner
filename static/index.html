@@ -756,11 +756,9 @@
 <main>
 
   <!-- Presets -->
-  <div class="presets">
+  <div class="presets" id="presetsBar">
     <span class="presets-label" data-i18n="quickPresets">Quick Presets</span>
-    <button class="preset-btn" onclick="applyPreset('bali')">🌴 Bali 4 Days</button>
-    <button class="preset-btn" onclick="applyPreset('paris')">🗼 Paris 5 Days</button>
-    <button class="preset-btn" onclick="applyPreset('tokyo')">🗾 Tokyo 3 Days</button>
+    <button class="preset-btn" onclick="renderRandomPresets()" title="Shuffle" style="padding:0.2rem 0.55rem;font-size:0.85rem;">🔀</button>
     <button class="preset-btn" onclick="showTimeline()" style="margin-left:auto" data-i18n="timelineNav">📷 Timeline</button>
     <button id="chatNavBtn" class="nav-btn" onclick="showChat()" data-i18n="chatNav">💬 Chat</button>
   </div>
@@ -3008,14 +3006,62 @@
   }
 
   // ===== Presets =====
-  const presets = {
-    bali: { destination:'Bali', duration_days:4, budget_jpy:300000, num_people:2, interests:['Food & Dining','Relaxation','Adventure'], travel_style:'Resort & Relaxation', additional_requests:'Please include a traditional Balinese spa experience' },
-    paris: { destination:'Paris', duration_days:5, budget_jpy:600000, num_people:2, interests:['Food & Dining','Sightseeing','Arts & Culture','Shopping'], travel_style:'Balanced', additional_requests:'Must include the Louvre and Eiffel Tower' },
-    tokyo: { destination:'Tokyo', duration_days:3, budget_jpy:150000, num_people:2, interests:['Sightseeing','Food & Dining'], travel_style:'Sightseeing-focused', additional_requests:'Include traditional Japanese experiences' }
-  };
+  const _presetPool = [
+    { label:'🌴 Bali',        destination:'Bali',          duration_days:4, budget_jpy:300000, num_people:2, interests:['Food & Dining','Relaxation','Adventure'],                      travel_style:'Resort & Relaxation',  additional_requests:'Please include a traditional Balinese spa experience' },
+    { label:'🗼 Paris',       destination:'Paris',         duration_days:5, budget_jpy:600000, num_people:2, interests:['Food & Dining','Sightseeing','Arts & Culture','Shopping'],     travel_style:'Balanced',             additional_requests:'Must include the Louvre and Eiffel Tower' },
+    { label:'🗾 Tokyo',       destination:'Tokyo',         duration_days:3, budget_jpy:150000, num_people:2, interests:['Sightseeing','Food & Dining'],                                travel_style:'Sightseeing-focused',  additional_requests:'Include traditional Japanese experiences' },
+    { label:'🗽 New York',    destination:'New York',      duration_days:5, budget_jpy:700000, num_people:2, interests:['Sightseeing','Food & Dining','Arts & Culture','Shopping'],     travel_style:'Urban Explorer',       additional_requests:'Include Broadway show and Central Park' },
+    { label:'🏛 Rome',        destination:'Rome',          duration_days:4, budget_jpy:500000, num_people:2, interests:['Sightseeing','Food & Dining','Arts & Culture'],               travel_style:'Cultural',             additional_requests:'Include Colosseum and Vatican City' },
+    { label:'🏖 Barcelona',   destination:'Barcelona',     duration_days:5, budget_jpy:550000, num_people:2, interests:['Food & Dining','Sightseeing','Arts & Culture'],               travel_style:'Balanced',             additional_requests:'Include Sagrada Familia and tapas tour' },
+    { label:'🦘 Sydney',      destination:'Sydney',        duration_days:5, budget_jpy:700000, num_people:2, interests:['Sightseeing','Adventure','Food & Dining'],                    travel_style:'Balanced',             additional_requests:'Include Opera House and Bondi Beach' },
+    { label:'⛩ Kyoto',       destination:'Kyoto',         duration_days:4, budget_jpy:200000, num_people:2, interests:['Sightseeing','Arts & Culture','Food & Dining'],               travel_style:'Cultural',             additional_requests:'Include traditional temples and tea ceremony' },
+    { label:'🇰🇷 Seoul',       destination:'Seoul',         duration_days:4, budget_jpy:250000, num_people:2, interests:['Food & Dining','Shopping','Sightseeing'],                    travel_style:'Balanced',             additional_requests:'Include K-food tour and Gyeongbokgung Palace' },
+    { label:'🐘 Bangkok',     destination:'Bangkok',       duration_days:5, budget_jpy:200000, num_people:2, interests:['Food & Dining','Sightseeing','Adventure'],                    travel_style:'Budget-friendly',      additional_requests:'Include temple tour and street food experience' },
+    { label:'🏝 Maldives',    destination:'Maldives',      duration_days:5, budget_jpy:900000, num_people:2, interests:['Relaxation','Adventure'],                                     travel_style:'Resort & Relaxation',  additional_requests:'Include snorkeling and overwater bungalow' },
+    { label:'🌇 Dubai',       destination:'Dubai',         duration_days:4, budget_jpy:600000, num_people:2, interests:['Shopping','Sightseeing','Adventure'],                         travel_style:'Luxury',               additional_requests:'Include Burj Khalifa and desert safari' },
+    { label:'🎡 London',      destination:'London',        duration_days:5, budget_jpy:700000, num_people:2, interests:['Sightseeing','Arts & Culture','Food & Dining'],               travel_style:'Balanced',             additional_requests:'Include British Museum and afternoon tea' },
+    { label:'🌅 Santorini',   destination:'Santorini',     duration_days:4, budget_jpy:600000, num_people:2, interests:['Relaxation','Sightseeing','Food & Dining'],                   travel_style:'Resort & Relaxation',  additional_requests:'Include sunset in Oia and wine tasting' },
+    { label:'🏰 Prague',      destination:'Prague',        duration_days:4, budget_jpy:400000, num_people:2, interests:['Sightseeing','Arts & Culture','Food & Dining'],               travel_style:'Cultural',             additional_requests:'Include Prague Castle and Old Town Square' },
+    { label:'🚲 Amsterdam',   destination:'Amsterdam',     duration_days:4, budget_jpy:500000, num_people:2, interests:['Sightseeing','Arts & Culture','Food & Dining'],               travel_style:'Balanced',             additional_requests:'Include canal tour and Van Gogh Museum' },
+    { label:'🦁 Singapore',   destination:'Singapore',     duration_days:4, budget_jpy:400000, num_people:2, interests:['Food & Dining','Sightseeing','Shopping'],                     travel_style:'Balanced',             additional_requests:'Include Gardens by the Bay and hawker food' },
+    { label:'🐓 Lisbon',      destination:'Lisbon',        duration_days:5, budget_jpy:450000, num_people:2, interests:['Food & Dining','Sightseeing','Arts & Culture'],               travel_style:'Balanced',             additional_requests:'Include Fado music show and pasteis de nata' },
+    { label:'🌺 Hawaii',      destination:'Hawaii',        duration_days:6, budget_jpy:750000, num_people:2, interests:['Adventure','Relaxation'],                                     travel_style:'Resort & Relaxation',  additional_requests:'Include volcano tour and luau dinner' },
+    { label:'🌮 Mexico City', destination:'Mexico City',   duration_days:5, budget_jpy:350000, num_people:2, interests:['Food & Dining','Sightseeing','Arts & Culture'],               travel_style:'Cultural',             additional_requests:'Include Teotihuacan pyramids and local food tour' },
+    { label:'🦁 Cape Town',   destination:'Cape Town',     duration_days:6, budget_jpy:500000, num_people:2, interests:['Adventure','Sightseeing','Food & Dining'],                    travel_style:'Balanced',             additional_requests:'Include Table Mountain and Cape Peninsula tour' },
+    { label:'🏔 Kathmandu',   destination:'Kathmandu',     duration_days:7, budget_jpy:300000, num_people:2, interests:['Adventure','Sightseeing'],                                    travel_style:'Adventure',            additional_requests:'Include trekking and Everest base camp view' },
+    { label:'🎭 Vienna',      destination:'Vienna',        duration_days:4, budget_jpy:500000, num_people:2, interests:['Arts & Culture','Food & Dining','Sightseeing'],               travel_style:'Cultural',             additional_requests:'Include opera house and Schönbrunn Palace' },
+    { label:'🎆 Istanbul',    destination:'Istanbul',      duration_days:5, budget_jpy:400000, num_people:2, interests:['Sightseeing','Food & Dining','Arts & Culture'],               travel_style:'Cultural',             additional_requests:'Include Hagia Sophia and Grand Bazaar' },
+    { label:'🏄 Phuket',      destination:'Phuket',        duration_days:5, budget_jpy:250000, num_people:2, interests:['Relaxation','Adventure'],                                     travel_style:'Resort & Relaxation',  additional_requests:'Include island hopping and Thai massage' },
+    { label:'🦅 Machu Picchu',destination:'Machu Picchu',  duration_days:6, budget_jpy:600000, num_people:2, interests:['Adventure','Sightseeing'],                                    travel_style:'Adventure',            additional_requests:'Include Inca Trail hike and local cuisine' },
+    { label:'🌸 Taipei',      destination:'Taipei',        duration_days:4, budget_jpy:200000, num_people:2, interests:['Food & Dining','Sightseeing','Shopping'],                     travel_style:'Balanced',             additional_requests:'Include night markets and Taipei 101' },
+    { label:'🧊 Reykjavik',   destination:'Reykjavik',     duration_days:5, budget_jpy:650000, num_people:2, interests:['Adventure','Sightseeing'],                                    travel_style:'Adventure',            additional_requests:'Include Northern Lights tour and geothermal baths' },
+    { label:'🎋 Osaka',       destination:'Osaka',         duration_days:4, budget_jpy:180000, num_people:2, interests:['Food & Dining','Sightseeing','Shopping'],                     travel_style:'Balanced',             additional_requests:'Include Dotonbori food tour and Osaka Castle' },
+    { label:'🏜 Marrakech',   destination:'Marrakech',     duration_days:5, budget_jpy:380000, num_people:2, interests:['Arts & Culture','Sightseeing','Food & Dining'],               travel_style:'Cultural',             additional_requests:'Include medina tour and desert day trip' },
+  ];
 
-  function applyPreset(key) {
-    const p = presets[key];
+  let _currentPresets = [];
+
+  function renderRandomPresets() {
+    const bar = document.getElementById('presetsBar');
+    bar.querySelectorAll('.preset-random-btn').forEach(b => b.remove());
+    const pool = [..._presetPool];
+    _currentPresets = [];
+    for (let i = 0; i < 3 && pool.length > 0; i++) {
+      const idx = Math.floor(Math.random() * pool.length);
+      _currentPresets.push(pool.splice(idx, 1)[0]);
+    }
+    const shuffleBtn = bar.querySelector('[title="Shuffle"]');
+    _currentPresets.forEach((p, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'preset-btn preset-random-btn';
+      btn.textContent = `${p.label} ${p.duration_days}Days`;
+      btn.onclick = () => applyPreset(i);
+      bar.insertBefore(btn, shuffleBtn.nextSibling);
+    });
+  }
+
+  function applyPreset(i) {
+    const p = _currentPresets[i];
     document.getElementById('destination').value = p.destination;
     document.getElementById('duration_days').value = p.duration_days;
     document.getElementById('num_people').value = p.num_people;
@@ -5199,6 +5245,7 @@
 
   // Enter to send (Shift+Enter = newline)
   document.addEventListener('DOMContentLoaded', () => {
+    renderRandomPresets();
     const inp = document.getElementById('chatInput');
     if (inp) {
       inp.addEventListener('keydown', e => {
