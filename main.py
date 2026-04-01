@@ -938,6 +938,7 @@ async def github_webhook(request: Request):
         subprocess.run(["git", "stash"], cwd=cwd)
         subprocess.run(["git", "pull", "origin", "main"], cwd=cwd)
         subprocess.run(["git", "stash", "pop"], cwd=cwd)
+        subprocess.run(["taskkill", "/f", "/im", "caddy_windows_amd64_custom.exe"], capture_output=True)
         sys.exit(0)
     threading.Thread(target=pull_and_restart, daemon=True).start()
     return {"ok": True}
