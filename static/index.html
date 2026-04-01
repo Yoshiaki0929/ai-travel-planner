@@ -805,6 +805,10 @@
               <option value="HKD">🇭🇰 HKD</option>
               <option value="SGD">🇸🇬 SGD</option>
               <option value="KRW">🇰🇷 KRW</option>
+              <option value="PHP">🇵🇭 PHP</option>
+              <option value="IDR">🇮🇩 IDR</option>
+              <option value="THB">🇹🇭 THB</option>
+              <option value="VND">🇻🇳 VND</option>
             </select>
           </div>
         </div>
@@ -3087,13 +3091,14 @@
   }
 
   // Approximate JPY conversion rates (for budget validation / plan generation)
-  const _toJPY = { USD:150, EUR:165, JPY:1, GBP:190, CNY:21, AUD:98, CAD:110, CHF:170, HKD:19, SGD:112, KRW:0.11 };
+  const _toJPY = { USD:150, EUR:165, JPY:1, GBP:190, CNY:21, AUD:98, CAD:110, CHF:170, HKD:19, SGD:112, KRW:0.11, PHP:2.6, IDR:0.0095, THB:4.3, VND:0.006 };
 
   function onCurrencyChange() { updateBudgetStep(); }
   function updateBudgetStep() {
     const c = document.getElementById('budget_currency').value;
     const i = document.getElementById('budget_amount');
     if (c === 'JPY' || c === 'KRW') { i.step = 10000; i.min = 10000; }
+    else if (c === 'IDR' || c === 'VND') { i.step = 100000; i.min = 100000; }
     else { i.step = 100; i.min = 100; }
   }
   function getBudgetInJPY() {
