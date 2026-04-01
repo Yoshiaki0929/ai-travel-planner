@@ -5248,34 +5248,45 @@
   // Incoming signals arrive here regardless of which page the user is on.
   function _initCallReceiveChannel(userId) {
     if (_callReceiveChannel) return;
+    console.log('[CALL] Subscribing to receive channel for user:', userId);
     _callReceiveChannel = supabaseClient
       .channel(`call:${userId}`)
-      .on('broadcast', { event: 'call-invite'  }, msg => _onCallInvite(msg.payload))
-      .on('broadcast', { event: 'call-accept'  }, msg => _onCallAccept(msg.payload))
-      .on('broadcast', { event: 'call-decline' }, msg => _onCallDecline(msg.payload))
-      .on('broadcast', { event: 'call-cancel'  }, msg => _onCallCancel(msg.payload))
-      .on('broadcast', { event: 'call-end'     }, msg => _onCallEnd(msg.payload))
-      .on('broadcast', { event: 'call-offer'   }, msg => _onCallOffer(msg.payload))
-      .on('broadcast', { event: 'call-answer'  }, msg => _onCallAnswer(msg.payload))
-      .on('broadcast', { event: 'call-ice'     }, msg => _onCallIce(msg.payload))
-      .subscribe();
+      .on('broadcast', { event: 'call-invite'  }, msg => { console.log('[CALL] Received call-invite', msg); _onCallInvite(msg.payload); })
+      .on('broadcast', { event: 'call-accept'  }, msg => { console.log('[CALL] Received call-accept', msg); _onCallAccept(msg.payload); })
+      .on('broadcast', { event: 'call-decline' }, msg => { console.log('[CALL] Received call-decline', msg); _onCallDecline(msg.payload); })
+      .on('broadcast', { event: 'call-cancel'  }, msg => { console.log('[CALL] Received call-cancel', msg); _onCallCancel(msg.payload); })
+      .on('broadcast', { event: 'call-end'     }, msg => { console.log('[CALL] Received call-end', msg); _onCallEnd(msg.payload); })
+      .on('broadcast', { event: 'call-offer'   }, msg => { console.log('[CALL] Received call-offer'); _onCallOffer(msg.payload); })
+      .on('broadcast', { event: 'call-answer'  }, msg => { console.log('[CALL] Received call-answer'); _onCallAnswer(msg.payload); })
+      .on('broadcast', { event: 'call-ice'     }, msg => { _onCallIce(msg.payload); })
+      .subscribe((status, err) => {
+        console.log('[CALL] Receive channel status:', status, err || '');
+      });
   }
 
   // Subscribe to the target user's channel so we can send signals to them.
   async function _ensureSendChannel(targetUserId) {
     if (_callSendChannel) return;
+    console.log('[CALL] Subscribing to send channel for target:', targetUserId);
     await new Promise(resolve => {
       _callSendChannel = supabaseClient
         .channel(`call:${targetUserId}`)
-        .subscribe(status => { if (status === 'SUBSCRIBED' || status === 'CHANNEL_ERROR') resolve(); });
+        .subscribe((status, err) => {
+          console.log('[CALL] Send channel status:', status, err || '');
+          if (status === 'SUBSCRIBED' || status === 'CHANNEL_ERROR') resolve();
+        });
     });
   }
 
   async function _sendCallSignal(event, payload) {
     const targetId = payload.targetId;
-    if (!targetId || !supabaseClient) return;
+    if (!targetId || !supabaseClient) { console.warn('[CALL] Cannot send signal: missing targetId or supabaseClient'); return; }
+    console.log('[CALL] Sending signal:', event, 'to:', targetId, payload);
     await _ensureSendChannel(targetId);
-    if (_callSendChannel) _callSendChannel.send({ type: 'broadcast', event, payload });
+    if (_callSendChannel) {
+      const result = await _callSendChannel.send({ type: 'broadcast', event, payload });
+      console.log('[CALL] Send result:', result);
+    }
   }
 
   async function _fetchDmPeer(roomId) {
